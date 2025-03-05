@@ -1,0 +1,18 @@
+@import 'tailwindcss';
+
+:root {
+  font-family: 'Poppins', sans-serif;
+  height: 1dvh;
+  background-color: #f2f0ef;
+}
+
+.button {
+  transition: all 0.3s ease-in-out;
+}
+
+.button:hover {
+  transform: translateY(-3px);
+}
+@utility grid-cols-70-30 {
+  grid-template-columns: 70% 28%;
+}
