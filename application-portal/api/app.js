@@ -23,20 +23,6 @@ const port = 5000
 app.use(cors())
 app.use(express.json())
 
-const fs = require('fs')
-const logMessage = (message) => {
-  const timestamp = new Date().toISOString()
-  const logEntry = `${timestamp} - ${message}\n`
-
-  fs.appendFile('./logs.txt', logEntry, (err) => {
-    if (err) {
-      console.error('Fehler beim Schreiben in die Log-Datei:', err)
-    } else {
-      console.log('Log erfolgreich geschrieben.')
-    }
-  })
-}
-
 app.get('/applications', async (_, res) => {
   try {
     const applications = await getAllApplications()
