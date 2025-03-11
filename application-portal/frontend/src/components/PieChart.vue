@@ -69,11 +69,5 @@ watch(
 </script>
 
 <template>
-  <Vchart class="chart" :option="option"></Vchart>
+  <Vchart class="min-h-[400px]" :option="option"></Vchart>
 </template>
-
-<style scoped>
-.chart {
-  height: 400px;
-}
-</style>
