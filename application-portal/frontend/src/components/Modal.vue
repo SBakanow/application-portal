@@ -69,10 +69,7 @@ defineExpose({
     <form v-if="visible" method="dialog" class="w-full">
       <p class="font-bold text-xl">{{ props.dialogText }}</p>
       <slot />
-      <div
-        class="flex justify-center space-x-4 py-6"
-        v-if="!props.hideConfirm || props.showCancel"
-      >
+      <div class="flex justify-center space-x-4 py-6" v-if="!props.hideConfirm || props.showCancel">
         <button
           v-if="props.showCancel"
           value="false"

@@ -12,10 +12,10 @@ defineProps({
 </script>
 
 <template>
-  <section class="hero fle justify-center">
+  <section class="hero flex justify-center">
     <div class="pt-40 text-center">
-      <h1 class="text-5xl font-extrabold text-black sm:text-6xl md:text-6xl">{{ title }}</h1>
-      <p class="my-8 text-2xl text-black">{{ subtitle }}</p>
+      <h1 class="text-5xl font-extrabold text-black sm:text-6xl md:text-7xl">{{ title }}</h1>
+      <p class="my-8 text-3xl text-black">{{ subtitle }}</p>
     </div>
   </section>
 </template>

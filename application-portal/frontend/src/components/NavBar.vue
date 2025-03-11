@@ -9,9 +9,9 @@ const isActiveLink = (routePath) => {
 </script>
 
 <template>
-  <nav class="navbar border-b border-slate-500">
-    <div class="mx-auto max-w-7xl px-2 sm:px-4 lg:px-4">
-      <div class="flex h-18 items-center justify-between">
+  <nav class="new-navbar">
+    <div class="mx-auto max-w-7xl sm:px-4 lg:px-4">
+      <div class="flex h-15 items-center justify-between">
         <div class="flex flex-1 items-center justify-center md:items-stretch md:justify-start">
           <RouterLink class="flex flex-shrink-0 items-center mr-4" to="/">
             <svg
@@ -25,7 +25,7 @@ const isActiveLink = (routePath) => {
               viewBox="0 0 64 64"
               enable-background="new 0 0 64 64"
               xml:space="preserve"
-              fill="#ffffff"
+              fill="#0f172b"
             >
               <g>
                 <rect x="14" y="36" width="4" height="10" />
@@ -40,28 +40,17 @@ const isActiveLink = (routePath) => {
             </svg>
           </RouterLink>
           <div class="md:ml-auto">
-            <div class="flex space-x-2">
+            <div class="flex space-x-4">
               <RouterLink
-                :class="[
-                  isActiveLink('/') ? 'bg-cyan-900' : 'hover:bg-gray-900 hover:text-white',
-                  'text-white',
-                  'rounded-md',
-                  'px-3',
-                  'py-2',
-                ]"
+                :class="['nav-link', isActiveLink('/') ? 'nav-link-active' : 'nav-link']"
                 to="/"
               >
                 Home
               </RouterLink>
               <RouterLink
                 :class="[
-                  isActiveLink('/applications')
-                    ? 'bg-cyan-900'
-                    : 'hover:bg-gray-900 hover:text-white',
-                  'text-black',
-                  'rounded-md',
-                  'px-3',
-                  'py-2',
+                  'nav-link',
+                  isActiveLink('/applications') ? 'nav-link-active' : 'nav-link',
                 ]"
                 to="/applications"
               >
@@ -69,13 +58,8 @@ const isActiveLink = (routePath) => {
               </RouterLink>
               <RouterLink
                 :class="[
-                  isActiveLink('/applications/add')
-                    ? 'bg-cyan-900'
-                    : 'hover:bg-gray-900 hover:text-white',
-                  'text-black',
-                  'rounded-md',
-                  'px-3',
-                  'py-2',
+                  'nav-link',
+                  isActiveLink('/applications/add') ? 'nav-link-active' : 'nav-link',
                 ]"
                 to="/applications/add"
               >
@@ -90,61 +74,59 @@ const isActiveLink = (routePath) => {
 </template>
 
 <style scoped>
-.navbar {
-  --_animationStartsAfter: 9vh;
-  --_animationDistance: 200px;
-  --_surfaceColorStart: #f2f0ef;
-  --_surfaceColorEnd: hsla(0, 0%, 0%, 0.4);
-  --_textColorStart: #000000;
-  --_textColorEnd: hsl(0 10% 90%);
-  --_borderRadius: 0;
-
-  --_logoAfterAnimation: block;
-
-  padding: 0 3rem;
+.new-navbar {
+  background-color: rgba(255, 255, 255, 0.75);
+  color: black;
+  width: 50dvw;
+  padding: 0 2rem;
   margin-inline: auto;
-  width: var(--_headerWidth, auto);
-
-  color: var(--_textColorStart);
-  background-color: var(--_surfaceColorStart);
-
   position: sticky;
+  top: 1rem;
   z-index: 1000;
+  border-radius: 100vw;
+  backdrop-filter: blur(1rem);
 
-  @supports (animation-timeline: view()) {
-    top: -5rem;
-
-    border-radius: var(--_borderRadius, 0);
-    backdrop-filter: blur(0.35rem);
-
-    animation: stickyNav linear forwards;
-    animation-timeline: view();
-    animation-range-start: calc(100vh + var(--_animationStartsAfter));
-    animation-range-end: calc(100vh + var(--_animationStartsAfter) + var(--_animationDistance));
-  }
-
-  .logo {
-    display: var(--_logoDisplay, block);
-    fill: currentColor;
-    margin-right: 1rem;
-  }
+  box-shadow:
+    inset 0 0 0.5rem hsl(0 0% 100% / 0.1),
+    0 0 0.75rem hsl(0 0% 0% / 0.3);
 }
 
-@keyframes stickyNav {
-  0%,
-  100% {
-    --_headerWidth: fit-content;
-    --_logoDisplay: var(--_logoAfterAnimation);
-    --_borderRadius: 100vw;
-  }
+.nav-link {
+  position: relative;
+  margin: 8px 20px 8px 20px;
+  text-decoration: none;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 1);
+  transition: all 0.3s ease;
+}
 
-  100% {
-    top: 1rem;
-    color: var(--_textColorEnd);
-    background-color: var(--_surfaceColorEnd);
-    box-shadow:
-      inset 0 0 0.5rem hsl(0 0% 100% / 0.1),
-      0 0 0.75rem hsl(0 0% 0% / 0.3);
-  }
+.nav-link:nth-last-child(1) {
+  margin: 8px 0px 8px 20px;
+}
+
+.nav-link:after {
+  content: '';
+  position: absolute;
+  background-color: rgba(15, 23, 43, 0.452);
+  height: 4px;
+  width: 0;
+  left: 0;
+  bottom: -2px;
+  transition: 0.3s ease;
+}
+
+.nav-link-active:after {
+  content: '';
+  position: absolute;
+  background-color: rgb(15, 23, 43);
+  height: 4px;
+  width: 100%;
+  left: 0;
+  bottom: -2px;
+}
+
+.nav-link:hover:after {
+  width: 100%;
 }
 </style>

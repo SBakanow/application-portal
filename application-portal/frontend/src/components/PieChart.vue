@@ -15,6 +15,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  legendPosition: {
+    type: String,
+    default: ''
+  }
 })
 
 use([CanvasRenderer, PieChart, TitleComponent, TooltipComponent, LegendComponent])
@@ -32,7 +36,7 @@ const option = ref({
   },
   legend: {
     orient: 'vertical',
-    right: 'left',
+    left: props.legendPosition,
     data: [],
   },
   series: [
