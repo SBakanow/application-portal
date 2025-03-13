@@ -12,8 +12,8 @@ defineProps({
 </script>
 
 <template>
-  <section class="hero min-h-[70dvh] flex justify-center">
-    <div class="pt-40 text-center">
+  <section class="hero min-h-[60dvh] flex justify-center">
+    <div class="pt-30 text-center">
       <h1 class="text-5xl font-extrabold text-black sm:text-6xl md:text-7xl">{{ title }}</h1>
       <p class="my-8 text-3xl text-black">{{ subtitle }}</p>
     </div>

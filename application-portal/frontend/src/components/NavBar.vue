@@ -9,7 +9,7 @@ const isActiveLink = (routePath) => {
 </script>
 
 <template>
-  <nav class="new-navbar">
+  <nav class="new-navbar mb-10">
     <div class="mx-auto max-w-7xl sm:px-4 lg:px-4">
       <div class="flex h-15 items-center justify-between">
         <div class="flex flex-1 items-center justify-center md:items-stretch md:justify-start">

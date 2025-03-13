@@ -45,7 +45,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="px-4 py-10">
+  <section class="px-4">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 container-xl lg:container m-auto pb-70">
       <div
         class="bg-slate-900 border rounded-2xl flex flex-col justify-center items-center gap-6 py-4 px-4"

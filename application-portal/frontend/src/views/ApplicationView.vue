@@ -1,23 +1,18 @@
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
-import { useRoute, RouterLink, useRouter } from 'vue-router'
+import { ref, reactive, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import PulseLoader from 'vue-spinner/src/PulseLoader.vue'
 import BackButton from '@/components/BackButton.vue'
 import { useToast } from 'vue-toastification'
 import Modal from '@/components/Modal.vue'
+import CompanyForm from '@/components/CompanyForm.vue'
+import ApplicationForm from '@/components/ApplicationForm.vue'
 import axios from 'axios'
-
-const props = defineProps({
-  set: {
-    type: Boolean,
-    default: true,
-  },
-})
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
 
+const toast = useToast()
 const toastOptions = {
   position: 'top-center',
   timeout: 5000,
@@ -168,19 +163,6 @@ const handleCompanyEdit = async () => {
   }
 }
 
-const currentInput = ref('')
-
-const saveChip = (event) => {
-  event.preventDefault()
-  ;((props.set && application.skills.indexOf(currentInput.value) === -1) || !props.set) &&
-    application.skills.push(currentInput.value)
-  currentInput.value = ''
-}
-
-const deleteChip = (index) => {
-  application.skills.splice(index, 1)
-}
-
 const steps = ['Pending', 'Interview', 'Accepted', 'Rejected']
 
 const getStepTitle = (index) => {
@@ -290,7 +272,7 @@ onMounted(async () => {
                   <h3 class="text-cyan-800 text-lg font-bold mb-2">Skills</h3>
                   <div class="w-full flex flex-wrap space-x-2 mb-2">
                     <div
-                      class="px-3 py-1 m-1 flex items-center text-sm rounded-full shadow-md bg-slate-800 text-white"
+                      class="px-3 py-1 my-1 flex items-center text-sm rounded-full shadow-md bg-slate-800 text-white"
                       v-for="chip of state.application.skills"
                       :key="chip.id"
                     >
@@ -299,155 +281,9 @@ onMounted(async () => {
                   </div>
                 </div>
               </div>
-              <form v-else @submit.prevent="handleSubmit" key="edit">
-                <div class="mb-4">
-                  <label for="type" class="block text-gray-700 font-bold text-sm mb-2"
-                    >Job Type</label
-                  >
-                  <select
-                    v-model="application.type"
-                    id="type"
-                    name="type"
-                    class="shadow-md outline-0 rounded w-full py-2 px-3"
-                    required
-                  >
-                    <option value="Full-Time">Full-Time</option>
-                    <option value="Part-Time">Part-Time</option>
-                    <option value="Remote">Remote</option>
-                    <option value="Internship">Internship</option>
-                  </select>
-                </div>
-
-                <div class="mb-4">
-                  <label for="status" class="block text-gray-700 font-bold text-sm mb-2"
-                    >Job Status</label
-                  >
-                  <select
-                    v-model="application.status"
-                    id="status"
-                    name="status"
-                    class="shadow-md outline-0 rounded w-full py-2 px-3"
-                    required
-                  >
-                    <option value="Pending">Pending</option>
-                    <option value="Interview">Interview</option>
-                    <option value="Accepted">Accepted</option>
-                    <option value="Rejected">Rejected</option>
-                  </select>
-                </div>
-
-                <div class="mb-4">
-                  <label for="name" class="block text-gray-700 font-bold text-sm mb-2"
-                    >Job Listing Name</label
-                  >
-                  <input
-                    v-model="application.title"
-                    type="text"
-                    id="name"
-                    name="name"
-                    class="shadow-md outline-0 rounded w-full py-2 px-3 mb-2"
-                    placeholder="eg. Frontend Developer"
-                    required
-                  />
-                </div>
-
-                <div class="mb-4">
-                  <label for="location" class="block text-gray-700 font-bold text-sm mb-2">
-                    Location
-                  </label>
-                  <input
-                    v-model="application.location"
-                    type="text"
-                    id="location"
-                    name="location"
-                    class="shadow-md outline-0 rounded w-full py-2 px-3 mb-2"
-                    placeholder="Company Location"
-                    required
-                  />
-                </div>
-
-                <div class="mb-4">
-                  <label for="description" class="block text-gray-700 font-bold text-sm mb-2"
-                    >Description</label
-                  >
-                  <textarea
-                    v-model="application.description"
-                    id="description"
-                    name="description"
-                    class="shadow-md outline-0 rounded w-full py-2 px-3 min-h-40"
-                    rows="4"
-                    placeholder="Add any job duties, expectations, requirements, etc"
-                  ></textarea>
-                </div>
-
-                <div class="mb-4">
-                  <label for="minSalary" class="block text-gray-700 font-bold text-sm mb-2"
-                    >Salary</label
-                  >
-                  <div class="flex space-x-4">
-                    <input
-                      v-model="application.minSalary"
-                      id="minSalary"
-                      name="minSalary"
-                      class="shadow-md outline-0 rounded w-full py-2 px-3"
-                      type="text"
-                      inputmode="numeric"
-                      pattern="[0-9]+"
-                      oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-                      required
-                    />
-                    <span>_</span>
-                    <input
-                      v-model="application.maxSalary"
-                      id="maxSalary"
-                      name="maxSalary"
-                      class="shadow-md outline-0 rounded w-full py-2 px-3"
-                      type="text"
-                      inputmode="numeric"
-                      pattern="[0-9]+"
-                      oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div class="mb-4">
-                  <label for="link" class="block text-gray-700 font-bold text-sm mb-2">Link</label>
-                  <input
-                    v-model="application.link"
-                    type="text"
-                    id="link"
-                    name="link"
-                    class="shadow-md outline-0 rounded w-full py-2 px-3 mb-2"
-                    placeholder="https://www.example.com"
-                    required
-                  />
-                </div>
-                <div class="mb-4">
-                  <label for="skills" class="block text-gray-700 font-bold text-sm mb-2"
-                    >Skills</label
-                  >
-                  <input
-                    v-model="currentInput"
-                    type="text"
-                    id="skills"
-                    name="skills"
-                    class="shadow-md outline-0 rounded w-full py-2 px-3 mb-2"
-                    placeholder="Add any required skills"
-                    @keypress.enter="saveChip"
-                  />
-                  <div class="w-full flex flex-wrap space-x-2 mb-2">
-                    <div
-                      class="px-3 py-1 m-1 flex items-center text-sm rounded-full shadow-md bg-slate-800 text-white"
-                      v-for="(chip, i) of application.skills"
-                      :key="chip.label"
-                    >
-                      {{ chip }}
-                      <i class="pi pi-times cursor-pointer ml-2" @click="deleteChip(i)"></i>
-                    </div>
-                  </div>
-                </div>
-              </form>
+              <div v-else class="relative">
+                <ApplicationForm :application="application" />
+              </div>
               <div v-if="!applicationEditing" class="relative">
                 <button
                   @click="applicationEditing = true"
@@ -490,74 +326,18 @@ onMounted(async () => {
 
                 <h3 class="text-lg">Contact Email:</h3>
 
-                <p class="my-2 bg-[aliceblue] p-2 font-bold">
+                <p class="my-2 py-2 font-bold">
                   {{ state.application.Company.contactEmail }}
                 </p>
 
                 <h3 class="text-lg">Contact Phone:</h3>
 
-                <p class="my-2 bg-[aliceblue] p-2 font-bold">
+                <p class="my-2 py-2 font-bold">
                   {{ state.application.Company.contactPhone }}
                 </p>
               </div>
               <div v-else class="relative">
-                <div class="mb-4">
-                  <label for="company" class="block text-gray-700 font-bold text-sm mb-2"
-                    >Company Name</label
-                  >
-                  <input
-                    v-model="company.name"
-                    type="text"
-                    id="company"
-                    name="company"
-                    class="shadow-md outline-0 rounded w-full py-2 px-3"
-                    placeholder="Company Name"
-                  />
-                </div>
-
-                <div class="mb-4">
-                  <label
-                    for="company_description"
-                    class="block text-gray-700 font-bold text-sm mb-2"
-                    >Company Description</label
-                  >
-                  <textarea
-                    v-model="company.description"
-                    id="company_description"
-                    name="company_description"
-                    class="shadow-md outline-0 rounded w-full py-2 px-3 min-h-55"
-                    rows="4"
-                    placeholder="What does your company do?"
-                  ></textarea>
-                </div>
-
-                <div class="mb-4">
-                  <label for="contact_email" class="block text-gray-700 font-bold text-sm mb-2"
-                    >Contact Email</label
-                  >
-                  <input
-                    v-model="company.contactEmail"
-                    type="email"
-                    id="contact_email"
-                    name="contact_email"
-                    class="shadow-md outline-0 rounded w-full py-2 px-3"
-                    placeholder="Email address for applicants"
-                    required
-                  />
-                </div>
-                <div class="mb-4">
-                  <label for="contact_phone" class="block text-gray-700 font-bold text-sm mb-2"
-                    >Contact Phone</label
-                  >
-                  <input
-                    v-model="company.contactPhone"
-                    type="tel"
-                    id="contact_phone"
-                    name="contact_phone"
-                    class="shadow-md outline-0 rounded w-full py-2 px-3"
-                    placeholder="Optional phone for applicants"
-                  />
-                </div>
+                <CompanyForm :company="company" />
               </div>
               <div v-if="!companyEditing" class="relative">
                 <button
@@ -611,7 +391,7 @@ onMounted(async () => {
 
 <style>
 .fade-enter-active {
-  transition: opacity 0.5s;
+  transition: opacity 0.5s ease;
 }
 .fade-enter-from,
 .fade-leave-to {
