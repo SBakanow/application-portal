@@ -7,6 +7,7 @@ const {
   getCountByType,
   getCountByStatus,
   getApplicationsByCity,
+  getApplicationsForCSV,
   updateApplication,
   deleteApplication,
   createCompany,
@@ -22,6 +23,42 @@ const port = 5000
 
 app.use(cors())
 app.use(express.json())
+
+const createCSV = async (data) => {
+  const header = [
+    'Firmenname',
+    'Jobtitel',
+    'Typ',
+    'Status',
+    'Ort',
+    'Link',
+    'Beworben am',
+  ]
+
+  const realHeader = [
+    'name',
+    'title',
+    'type',
+    'status',
+    'location',
+    'link',
+    'createdAt',
+  ]
+
+  const csv = [
+    header.join(';'),
+    ...data.map((entry) => {
+      const row = {
+        name: entry.Company?.name || '',
+        ...entry,
+      }
+
+      return realHeader.map((fieldName) => JSON.stringify(row[fieldName])).join(';')
+    }),
+  ].join('\r\n')
+
+  return csv
+}
 
 app.get('/applications', async (_, res) => {
   try {
@@ -77,6 +114,16 @@ app.get('/applications-by-city', async (_, res) => {
       app.latlong = JSON.parse(app.latlong)
     })
     res.status(200).json(applications)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.get('/applications-csv', async (_, res) => {
+  try {
+    const applications = await getApplicationsForCSV()
+    const applicationsCSV = await createCSV(applications)
+    res.status(200).json(applicationsCSV)
   } catch (error) {
     res.status(500).json({ error: error.message })
   }

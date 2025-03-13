@@ -72,6 +72,25 @@ const handleClickOutside = (event) => {
   }
 }
 
+const csv = ref()
+
+const downloadCSV = async () => {
+  try {
+    const response = await axios.get('/api/applications-csv')
+    csv.value = await response.data
+  } catch (error) {
+    console.error('Error downloading CSV: ', error)
+  } finally {
+    const blob = new Blob([csv.value], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const hiddenElement = document.createElement('a')
+    hiddenElement.href = url
+    hiddenElement.download = 'applications.csv'
+    hiddenElement.click()
+    URL.revokeObjectURL(url)
+  }
+}
+
 onMounted(async () => {
   try {
     const response = await axios.get('/api/applications')
@@ -92,35 +111,46 @@ onUnmounted(() => {
 <template>
   <section class="px-4 py-10">
     <div class="container-xl lg:container m-auto">
-      <div v-if="showSearch" class="relative w-100">
-        <input
-          v-model="searchQuery"
-          id="search"
-          type="search"
-          class="search bg-white block w-full p-4 ps-10 text-sm text-gray-900 shadow-md rounded-full outline-0"
-          placeholder="Search Title, Location or Company..."
-          required
-        />
-        <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-          <i class="pi pi-search text-gray-500"></i>
+      <div class="flex justify-between items-center">
+        <div v-if="showSearch" class="relative w-100">
+          <input
+            v-model="searchQuery"
+            id="search"
+            type="search"
+            class="search bg-white block w-full p-4 ps-10 text-sm text-gray-900 shadow-md rounded-full outline-0"
+            placeholder="Search Title, Location or Company..."
+            required
+          />
+          <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+            <i class="pi pi-search text-gray-500"></i>
+          </div>
+          <button
+            @click="showModal"
+            class="filter absolute end-[-3.8rem] bottom-0.5 rounded-full shadow-md bg-white w-12 h-12 flex justify-center items-center cursor-pointer"
+          >
+            <i
+              :class="[
+                'pi',
+                filters.type.length <= 0 && filters.status.length <= 0 && filters.minSalary == 30000
+                  ? 'pi-filter'
+                  : 'pi-filter-fill',
+                'text-gray-500',
+              ]"
+            ></i>
+          </button>
+          <Modal id="myDialog" ref="modal" hideConfirm dialogText="Add Filter">
+            <Filter :filters="filters" />
+          </Modal>
         </div>
-        <button
-          @click="showModal"
-          class="filter absolute end-[-3.8rem] bottom-0.5 rounded-full shadow-md bg-white w-12 h-12 flex justify-center items-center"
-        >
-          <i
-            :class="[
-              'pi',
-              filters.type.length <= 0 && filters.status.length <= 0 && filters.minSalary == 30000
-                ? 'pi-filter'
-                : 'pi-filter-fill',
-              'text-gray-500',
-            ]"
-          ></i>
-        </button>
-        <Modal id="myDialog" ref="modal" hideConfirm dialogText="Add Filter">
-          <Filter :filters="filters" />
-        </Modal>
+        <div>
+          <button
+            title="Download CSV"
+            @click.prevent="downloadCSV"
+            class="button bg-slate-800 hover:bg-slate-900 rounded-full shadow-md w-10 h-10 flex items-center justify-center cursor-pointer"
+          >
+            <i class="pi pi-download text-lg text-white"></i>
+          </button>
+        </div>
       </div>
       <div v-if="state.isLoading" class="text-center text-gray-500 py-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">

@@ -111,6 +111,19 @@ const getApplicationsByCity = async () => {
   return results.map((result) => result.toJSON())
 }
 
+const getApplicationsForCSV = async () => {
+  const results = await Application.findAll({
+    attributes: ['title', 'type', 'status', 'location', 'link', 'createdAt'],
+    include: [
+      {
+        model: Company,
+        attributes: ['name'],
+      },
+    ],
+  })
+  return results.map((result) => result.toJSON())
+}
+
 const updateApplication = async (id, data) => {
   return await Application.update(data, {
     where: {
@@ -178,6 +191,7 @@ module.exports = {
   getCountByType,
   getCountByStatus,
   getApplicationsByCity,
+  getApplicationsForCSV,
   updateApplication,
   deleteApplication,
   createCompany,
