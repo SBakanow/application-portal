@@ -60,11 +60,11 @@ const statusColors = {
             @click.prevent="toggleFullDescription"
             class="text-cyan-600 hover:text-cyan-700 mb-5"
           >
-            {{ showFullDescription ? 'Less' : 'More' }}
+            {{ showFullDescription ? 'Collapse Description' : 'Read Full Description' }}
           </button>
         </div>
-        <h3 class="text-cyan-600 mb-2">
-          {{ application.minSalary / 1000 }}K - {{ application.maxSalary / 1000 }}K €/Year
+        <h3 class="text-gray-600 mb-2">
+          Beworben am: {{ new Date(application.createdAt).toLocaleDateString() }}
         </h3>
 
         <div class="border border-gray-100 mb-5"></div>
@@ -88,7 +88,7 @@ const statusColors = {
   inherits: false;
 }
 
-.card:hover::after{
+.card:hover::after {
   --angle: 0deg;
   content: '';
   position: absolute;
@@ -98,7 +98,6 @@ const statusColors = {
   border-radius: 16px;
   animation: 4s spin linear infinite;
 }
-
 
 @keyframes spin {
   from {
