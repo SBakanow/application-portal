@@ -1,5 +1,4 @@
-const Company = require('../models/Company')
-const Application = require('../models/Application')
+const { Application, Company } = require('../models')
 
 const createCompany = async (data) => {
   return await Company.create(data)

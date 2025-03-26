@@ -1,6 +1,4 @@
-const Application = require('../models/Application')
-const Company = require('../models/Company')
-const sequelize = require('../config/database')
+const { sequelize, Application, Company } = require('../models')
 
 const createCSV = async (data) => {
   const header = [
