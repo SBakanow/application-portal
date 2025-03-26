@@ -21,6 +21,11 @@ module.exports = (sequelize) => {
     maxSalary: DataTypes.INTEGER,
     link: DataTypes.STRING,
     skills: DataTypes.JSON,
+    reminderEmailSent: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
     CompanyId: {
       type: DataTypes.INTEGER,
       allowNull: false,

@@ -141,6 +141,30 @@ const deleteApplication = async (id) => {
   })
 }
 
+const getPendingReminderApplications = async () => {
+  return await Application.findAll({
+    where: {
+      status: 'Pending',
+      reminderEmailSent: false,
+    },
+    attributes: ['id', 'title', 'status', 'createdAt', 'reminderEmailSent'],
+    include: [
+      {
+        model: Company,
+        attributes: ['name'],
+      },
+    ],
+  })
+}
+
+const updateApplicationReminderEmailSent = async (id, data) => {
+  return await Application.update(data, {
+    where: {
+      id: id,
+    },
+  })
+}
+
 module.exports = {
   createApplication,
   getAllApplications,
@@ -151,4 +175,6 @@ module.exports = {
   getApplicationsForCSV,
   updateApplication,
   deleteApplication,
+  getPendingReminderApplications,
+  updateApplicationReminderEmailSent,
 }

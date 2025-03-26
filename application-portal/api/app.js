@@ -3,6 +3,7 @@ const cors = require('cors')
 const { sequelize } = require('./models')
 const applicationRoutes = require('./routes/applicationRoutes')
 const companyRoutes = require('./routes/companyRoutes')
+const sendingEmail = require('./emailService')
 require('dotenv').config()
 
 const app = express()
@@ -35,4 +36,5 @@ sequelize
 
 app.listen(port, () => {
   console.log(`App listening on port ${port}`)
+  sendingEmail()
 })
