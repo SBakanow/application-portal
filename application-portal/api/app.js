@@ -1,14 +1,15 @@
-const express = require('express')
-const cors = require('cors')
-const { sequelize } = require('./models')
-const applicationRoutes = require('./routes/applicationRoutes')
-const companyRoutes = require('./routes/companyRoutes')
-const sendingEmail = require('./emailService')
-require('dotenv').config()
+import express from 'express'
+import cors from 'cors'
+import db from './models/index.js'
+import applicationRoutes from './routes/applicationRoutes.js'
+import companyRoutes from './routes/companyRoutes.js'
+import sendingEmail from './emailService.js'
+import 'dotenv/config'
 
 const app = express()
 const port = process.env.APP_PORT
 
+const { sequelize } = db
 const whitelist = ['http://localhost:3000']
 const corsOptions = {
   origin: function (origin, callback) {

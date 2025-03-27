@@ -1,4 +1,6 @@
-const { sequelize, Application, Company } = require('../models')
+import db from '../models/index.js'
+
+const { sequelize, Application, Company } = db
 
 const createCSV = async (data) => {
   const header = [
@@ -165,7 +167,7 @@ const updateApplicationReminderEmailSent = async (id, data) => {
   })
 }
 
-module.exports = {
+export default {
   createApplication,
   getAllApplications,
   getApplication,

@@ -1,5 +1,7 @@
-const { Sequelize } = require('sequelize')
-const config = require('../config/config.js')
+import { Sequelize } from 'sequelize'
+import { config } from '../config/config.js'
+import CompanyModel from './Company.js'
+import ApplicationModel from './Application.js'
 
 const sequelize = new Sequelize(config.development)
 
@@ -8,8 +10,8 @@ const db = {}
 db.sequelize = sequelize
 db.Sequelize = Sequelize
 
-db.Company = require('./Company.js')(sequelize)
-db.Application = require('./Application.js')(sequelize)
+db.Company = CompanyModel(sequelize)
+db.Application = ApplicationModel(sequelize)
 
 db.Company.hasMany(db.Application, {
   foreignKey: 'CompanyId',
@@ -20,4 +22,4 @@ db.Application.belongsTo(db.Company, {
   foreignKey: 'CompanyId',
 })
 
-module.exports = db
+export default db

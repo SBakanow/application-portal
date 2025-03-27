@@ -1,4 +1,6 @@
-const { Application, Company } = require('../models')
+import db from '../models/index.js'
+
+const { Application, Company } = db
 
 const createCompany = async (data) => {
   return await Company.create(data)
@@ -44,7 +46,7 @@ const deleteCompany = async (id) => {
   })
 }
 
-module.exports = {
+export default {
   createCompany,
   getAllCompanies,
   getCompany,

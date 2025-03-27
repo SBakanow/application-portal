@@ -1,9 +1,6 @@
-const nodemailer = require('nodemailer')
-require('dotenv').config()
-const {
-  getPendingReminderApplications,
-  updateApplicationReminderEmailSent,
-} = require('./controllers/applicationController')
+import nodemailer from 'nodemailer'
+import 'dotenv/config'
+import applicationController from './controllers/applicationController.js'
 
 const sendReminderEmail = (application) => {
   return new Promise((resolve, reject) => {
@@ -34,7 +31,8 @@ const sendReminderEmail = (application) => {
 
 const sendingEmail = async () => {
   try {
-    const pendingApplications = await getPendingReminderApplications()
+    const pendingApplications =
+      await applicationController.getPendingReminderApplications()
     const twoWeeksAgo = new Date()
     twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14)
 
@@ -43,12 +41,13 @@ const sendingEmail = async () => {
         try {
           await sendReminderEmail(application)
           try {
-            const result = await updateApplicationReminderEmailSent(
-              application.id,
-              {
-                reminderEmailSent: 1,
-              }
-            )
+            const result =
+              await applicationController.updateApplicationReminderEmailSent(
+                application.id,
+                {
+                  reminderEmailSent: 1,
+                }
+              )
 
             if (result > 0) {
               console.log(
@@ -80,4 +79,4 @@ const sendingEmail = async () => {
   }
 }
 
-module.exports = sendingEmail
+export default sendingEmail

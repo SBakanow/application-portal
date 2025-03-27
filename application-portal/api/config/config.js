@@ -1,6 +1,6 @@
-require('dotenv').config()
+import 'dotenv/config'
 
-module.exports = {
+export const config = {
   development: {
     dialect: 'sqlite',
     storage: './database.sqlite',

@@ -1,6 +1,7 @@
-const express = require('express')
+import express from 'express'
+import companyController from '../controllers/companyController.js'
+
 const router = express.Router()
-const companyController = require('../controllers/companyController')
 
 router.get('/companies', async (_, res) => {
   try {
@@ -64,4 +65,4 @@ router.delete('/companies/:id', async (req, res) => {
   }
 })
 
-module.exports = router
+export default router
