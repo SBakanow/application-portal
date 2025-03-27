@@ -19,8 +19,7 @@ const sendReminderEmail = (application) => {
       from: process.env.EMAIL_USER,
       to: process.env.EMAIL_USER,
       subject: 'Application Reminder',
-      text: `The application for ${application.title} was 2 weeks ago.\n
-      It's time to ask ${application.Company?.name} for some feedback.`,
+      text: `The application for ${application.title} was 2 weeks ago.\nIt's time to ask ${application.Company?.name} for some feedback.`,
     }
 
     transporter.sendMail(mailOptions, (error, info) => {

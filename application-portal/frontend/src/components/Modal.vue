@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 
 const dialog = ref()
+const position = ref({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' })
 
 const props = defineProps({
   confirmText: {
@@ -44,8 +45,19 @@ const confirm = () => {
 
 const visible = ref(false)
 
-const showModal = () => {
-  props.modal ? dialog.value.showModal() : dialog.value.show()
+const showModal = (triggerElement = null) => {
+  if (!props.modal && triggerElement) {
+    const rect = triggerElement.getBoundingClientRect()
+    position.value = {
+      top: '55px',
+      left: '430px',
+      transform: 'none',
+    }
+    dialog.value.show()
+  } else {
+    position.value = { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }
+    dialog.value.showModal()
+  }
   visible.value = true
 }
 
@@ -61,6 +73,7 @@ defineExpose({
   <dialog
     id="myDialog"
     ref="dialog"
+    :style="{ top: position.top, left: position.left, transform: position.transform }"
     :class="{
       'rounded-xl shadow-md  min-w-80 flex px-4 py-4 text-center z-50': visible,
     }"
@@ -94,10 +107,5 @@ defineExpose({
 <style scoped>
 dialog::backdrop {
   background-color: rgba(0, 0, 0, 0.2);
-}
-dialog {
-  position: fixed;
-  margin: auto;
-  border: 0;
 }
 </style>

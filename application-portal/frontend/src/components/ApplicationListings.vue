@@ -125,7 +125,7 @@ onUnmounted(() => {
             <i class="pi pi-search text-gray-500"></i>
           </div>
           <button
-            @click="showModal"
+            @click="(event) => $refs.modal.show(event.currentTarget)"
             class="filter absolute end-[-3.8rem] bottom-0.5 rounded-full shadow-md bg-white w-12 h-12 flex justify-center items-center cursor-pointer"
           >
             <i
