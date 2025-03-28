@@ -71,7 +71,7 @@ router.post('/applications', async (req, res) => {
     if (!company) {
       company = await companyController.createCompany(companyData)
     } else {
-      await updateCompany(company.id, companyData)
+      await companyController.updateCompany(company.id, companyData)
     }
 
     const application = await applicationController.createApplication(
