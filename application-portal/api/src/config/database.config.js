@@ -3,7 +3,7 @@ import 'dotenv/config'
 export const config = {
   development: {
     dialect: 'sqlite',
-    storage: './database.sqlite',
+    storage: './src/database.sqlite',
   },
   test: {
     dialect: 'sqlite',
@@ -11,6 +11,6 @@ export const config = {
   },
   production: {
     dialect: 'sqlite',
-    storage: './database.sqlite',
+    storage: './src/database.sqlite',
   },
 }

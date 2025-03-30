@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer'
 import 'dotenv/config'
-import applicationController from './controllers/applicationController.js'
+import applicationController from '../controllers/applicationController.js'
 
 const sendReminderEmail = (application) => {
   return new Promise((resolve, reject) => {

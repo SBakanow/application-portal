@@ -1,5 +1,5 @@
 import { Sequelize } from 'sequelize'
-import { config } from '../config/config.js'
+import { config } from '../config/database.config.js'
 import CompanyModel from './Company.js'
 import ApplicationModel from './Application.js'
 

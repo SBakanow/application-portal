@@ -3,7 +3,7 @@ import cors from 'cors'
 import db from './models/index.js'
 import applicationRoutes from './routes/applicationRoutes.js'
 import companyRoutes from './routes/companyRoutes.js'
-import sendingEmail from './emailService.js'
+import sendingEmail from './utils/emailService.js'
 import 'dotenv/config'
 
 const app = express()
