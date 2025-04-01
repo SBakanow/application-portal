@@ -9,6 +9,13 @@ const resolvers = {
   Application: {
     ...applicationResolver.Application,
   },
+  Company: {
+    ...companyResolvers.Company,
+  },
+  Mutation: {
+    ...applicationResolver.Mutation,
+    ...companyResolvers.Mutation,
+  },
 }
 
 export default resolvers

@@ -4,34 +4,40 @@ const companyTypeDef = gql`
   scalar DateTime
 
   type Company {
-    id: Int!
+    id: ID!
     name: String!
     description: String!
     contactEmail: String!
-    contactPhone: String!
+    contactPhone: String
     createdAt: DateTime!
     updatedAt: DateTime!
+    applications: [Application!]
+  }
+
+  input AddCompanyInput {
+    name: String!
+    description: String!
+    contactEmail: String!
+    contactPhone: String
+  }
+
+  input EditCompanyInput {
+    name: String
+    description: String
+    contactEmail: String
+    contactPhone: String
   }
 
   type Query {
-    companies: [Company]
-    company(id: ID!): Company
+    companies: [Company!]
+    company(id: ID!): Company!
+    companyByName(name: String!): Company!
   }
 
   type Mutation {
-    createCompany(
-      name: String!
-      description: String!
-      contactEmail: String!
-      contactPhone: String!
-    ): Company!
-    updateCompany(
-      name: String
-      description: String
-      contactEmail: String
-      contactPhone: String!
-    ): Company!
-    deleteCompany(id: ID!): Boolean!
+    createCompany(input: AddCompanyInput!): Company!
+    updateCompany(id: ID!, input: EditCompanyInput!): Company!
+    deleteCompany(id: ID!): Company
   }
 `
 

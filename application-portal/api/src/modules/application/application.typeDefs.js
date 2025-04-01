@@ -18,41 +18,59 @@ const applicationTypeDef = gql`
     reminderEmailSent: Boolean!
     createdAt: DateTime!
     updatedAt: DateTime!
-    company: Company
+    company: Company!
+  }
+
+  input AddApplicationInput {
+    title: String!
+    type: String!
+    status: String!
+    description: String!
+    location: String!
+    latlong: [String!]!
+    minSalary: Int!
+    maxSalary: Int!
+    link: String!
+    skills: [String!]
+    company: AddCompanyInput!
+  }
+
+  input EditApplicationInput {
+    title: String
+    type: String
+    status: String
+    description: String
+    location: String
+    latlong: [String!]
+    minSalary: Int
+    maxSalary: Int
+    link: String
+    skills: [String!]
+    reminderEmailSent: Boolean
+  }
+
+  type CountByType {
+    type: String!
+    count: Int!
+  }
+
+  type CountByStatus {
+    status: String!
+    count: Int!
   }
 
   type Query {
-    applications: [Application]
-    application(id: ID!): Application
+    applications(status: String, reminderEmailSent: Boolean): [Application!]
+    application(id: ID!): Application!
+    applicationCountByType: [CountByType!]
+    applicationCountByStatus: [CountByStatus!]
+    applicationsCSV: String!
   }
 
   type Mutation {
-    createApplication(
-      title: String!
-      type: String!
-      status: String!
-      description: String!
-      location: String!
-      latlong: [String!]
-      minSalary: Int!
-      maxSalary: Int!
-      link: String!
-      skills: [String!]
-      companyId: ID!
-    ): Application!
-    updateApplication(
-      title: String
-      type: String
-      status: String
-      description: String
-      location: String
-      latlong: [String!]
-      minSalary: Int
-      maxSalary: Int
-      link: String
-      skills: [String!]
-    ): Application!
-    deleteApplication(id: ID!): Boolean!
+    createApplication(input: AddApplicationInput!): Application!
+    updateApplication(id: ID!, input: EditApplicationInput!): Application!
+    deleteApplication(id: ID!): Application
   }
 `
 

@@ -40,22 +40,51 @@ const createCSV = async (data) => {
   return csv
 }
 
-const createApplication = async (data, companyId) => {
-  return await Application.create({ ...data, CompanyId: companyId })
+const createApplication = async (applicationData, companyData) => {
+  let company = await Company.findOne({
+    where: { name: companyData.name },
+  })
+  if (!company) {
+    company = await Company.create(companyData)
+  } else {
+    await Company.update(companyData, {
+      where: {
+        id: company.id,
+      },
+    })
+  }
+  return await Application.create({ ...applicationData, CompanyId: company.id })
 }
 
-const getAllApplications = async () => {
+const getAllApplications = async (filters = {}) => {
+  const where = {}
+
+  if (filters.status) {
+    where.status = filters.status
+  }
+  if (filters.reminderEmailSent !== undefined) {
+    where.reminderEmailSent = filters.reminderEmailSent
+  }
+
   const applications = await Application.findAll({
+    where,
     include: Company,
     order: [['createdAt', 'DESC']],
   })
+
+  if (applications.length === 0) {
+    throw new Error('No applications found')
+  }
   // Parsing JSON fields to get arrays
-  if (applications) {
+  try {
     applications.forEach((app) => {
       app.skills = JSON.parse(app.skills)
       app.latlong = JSON.parse(app.latlong)
     })
+  } catch (error) {
+    throw new Error('Error parsing JSON fields for skills or latlong')
   }
+
   return applications
 }
 
@@ -63,11 +92,18 @@ const getApplication = async (id) => {
   const application = await Application.findByPk(id, {
     include: Company,
   })
+
+  if (!application) {
+    throw new Error(`Application with ID ${id} not found`)
+  }
   // Parsing JSON fields to get arrays
-  if (application) {
+  try {
     application.skills = JSON.parse(application.skills)
     application.latlong = JSON.parse(application.latlong)
+  } catch (error) {
+    throw new Error('Error parsing JSON fields for skills or latlong')
   }
+
   return application
 }
 
@@ -79,6 +115,11 @@ const getCountByType = async () => {
     ],
     group: ['type'],
   })
+
+  if (results.length === 0) {
+    throw new Error('No applications found')
+  }
+
   return results.map((result) => result.toJSON())
 }
 
@@ -90,27 +131,12 @@ const getCountByStatus = async () => {
     ],
     group: ['status'],
   })
-  return results.map((result) => result.toJSON())
-}
 
-const getApplicationsByCity = async () => {
-  const results = await Application.findAll({
-    attributes: ['latlong'],
-    include: [
-      {
-        model: Company,
-        attributes: ['name'],
-      },
-    ],
-  })
-  const applications = results.map((result) => result.toJSON())
-
-  if (applications) {
-    applications.forEach((app) => {
-      app.latlong = JSON.parse(app.latlong)
-    })
+  if (results.length === 0) {
+    throw new Error('No applications found')
   }
-  return applications
+
+  return results.map((result) => result.toJSON())
 }
 
 const getApplicationsForCSV = async () => {
@@ -123,48 +149,45 @@ const getApplicationsForCSV = async () => {
       },
     ],
   })
+
+  if (results.length === 0) {
+    throw new Error('No applications found')
+  }
+
   const applications = results.map((result) => result.toJSON())
   return await createCSV(applications)
 }
 
 const updateApplication = async (id, data) => {
-  return await Application.update(data, {
+  const [affectedCount] = await Application.update(data, {
     where: {
-      id: id,
+      id,
     },
   })
+
+  if (affectedCount === 0) {
+    throw new Error(`Application with ID ${id} could not be updated`)
+  }
+
+  return await getApplication(id)
 }
 
 const deleteApplication = async (id) => {
-  return await Application.destroy({
-    where: {
-      id: id,
-    },
-  })
-}
+  try {
+    const application = await getApplication(id)
 
-const getPendingReminderApplications = async () => {
-  return await Application.findAll({
-    where: {
-      status: 'Pending',
-      reminderEmailSent: false,
-    },
-    attributes: ['id', 'title', 'status', 'createdAt', 'reminderEmailSent'],
-    include: [
-      {
-        model: Company,
-        attributes: ['name'],
-      },
-    ],
-  })
-}
+    const deletedCount = await Application.destroy({
+      where: { id },
+    })
 
-const updateApplicationReminderEmailSent = async (id, data) => {
-  return await Application.update(data, {
-    where: {
-      id: id,
-    },
-  })
+    if (deletedCount === 0) {
+      throw new Error(`Failed to delete application with ID ${id}`)
+    }
+
+    return application
+  } catch (error) {
+    throw new Error(`Failed to delete application: ${error.message}`)
+  }
 }
 
 export default {
@@ -173,10 +196,7 @@ export default {
   getApplication,
   getCountByType,
   getCountByStatus,
-  getApplicationsByCity,
   getApplicationsForCSV,
   updateApplication,
   deleteApplication,
-  getPendingReminderApplications,
-  updateApplicationReminderEmailSent,
 }
