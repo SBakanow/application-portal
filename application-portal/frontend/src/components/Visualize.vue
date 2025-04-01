@@ -1,47 +1,64 @@
 <script setup>
 import PieChart from './PieChart.vue'
 import Map from './Map.vue'
-import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import { computed } from 'vue'
+import { gql } from 'graphql-tag'
+import { useQuery } from '@vue/apollo-composable'
 
-const typeLegendData = ref([])
-const typeSeriesData = ref([])
+const fetchData = (query, key) => {
+  const { result, loading, error } = useQuery(query)
 
-const statusLegendData = ref([])
-const statusSeriesData = ref([])
+  return {
+    data: computed(() => {
+      if (loading.value) {
+        console.log(`Loading ${key} data...`)
+        return []
+      }
 
-const fetchCountByType = async () => {
-  try {
-    const response = await axios.get('/api/applications-count-by-type')
-    typeLegendData.value = response.data.map((app) => {
-      return app.type
-    })
-    typeSeriesData.value = response.data.map((app) => {
-      return { value: app.count, name: app.type }
-    })
-  } catch (error) {
-    console.error('Error fetching applications: ', error)
+      if (error.value) {
+        console.error(`Error fetching ${key}:`, error.value)
+        return []
+      }
+
+      return (
+        result.value?.[key]?.map((item) => ({
+          name: item.type || item.status,
+          value: item.count,
+        })) || []
+      )
+    }),
+    legendData: computed(() => {
+      return result.value?.[key]?.map((item) => item.type || item.status) || []
+    }),
   }
 }
 
-const fetchCountByStatus = async () => {
-  try {
-    const response = await axios.get('/api/applications-count-by-status')
-    statusLegendData.value = response.data.map((app) => {
-      return app.status
-    })
-    statusSeriesData.value = response.data.map((app) => {
-      return { value: app.count, name: app.status }
-    })
-  } catch (error) {
-    console.error('Error fetching applications: ', error)
+const countByTypeQuery = gql`
+  query getCountByTypeQuery {
+    applicationCountByType {
+      count
+      type
+    }
   }
-}
+`
 
-onMounted(async () => {
-  fetchCountByType()
-  fetchCountByStatus()
-})
+const countByStatusQuery = gql`
+  query getCountByStatusQuery {
+    applicationCountByStatus {
+      count
+      status
+    }
+  }
+`
+
+const { data: typeSeriesData, legendData: typeLegendData } = fetchData(
+  countByTypeQuery,
+  'applicationCountByType',
+)
+const { data: statusSeriesData, legendData: statusLegendData } = fetchData(
+  countByStatusQuery,
+  'applicationCountByStatus',
+)
 </script>
 
 <template>

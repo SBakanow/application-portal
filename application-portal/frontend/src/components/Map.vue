@@ -1,8 +1,9 @@
 <script setup>
 import 'leaflet/dist/leaflet.css'
 import { LMap, LTileLayer, LMarker, LPopup } from '@vue-leaflet/vue-leaflet'
-import { shallowRef, onMounted, reactive, ref, computed } from 'vue'
-import axios from 'axios'
+import { shallowRef, computed } from 'vue'
+import { gql } from 'graphql-tag'
+import { useQuery } from '@vue/apollo-composable'
 
 const zoom = shallowRef(6)
 const center = shallowRef([45.0, 10.0])
@@ -10,10 +11,19 @@ const germanyBounds = shallowRef([
   [47.27, 5.87],
   [55.06, 15.04],
 ])
-const state = reactive({
-  applications: [],
-})
-const isLoading = ref(true)
+
+const applicationsByCity = gql`
+  query getApplicationsByCity {
+    applications {
+      latlong
+      company {
+        name
+      }
+    }
+  }
+`
+
+const { result, loading } = useQuery(applicationsByCity)
 
 const offSetMarkers = (applications) => {
   const seenPositions = new Map()
@@ -26,8 +36,8 @@ const offSetMarkers = (applications) => {
       const offset = count * 0.001
       seenPositions.set(key, count + 1)
 
-      let lat = `${Number(app.latlong[0]) + offset}`
-      let long = `${Number(app.latlong[1]) + offset}`
+      let lat = Number(app.latlong[0]) + offset
+      let long = Number(app.latlong[1]) + offset
 
       return {
         ...app,
@@ -40,28 +50,12 @@ const offSetMarkers = (applications) => {
   })
 }
 
-const offsetApplications = computed(() => offSetMarkers(state.applications))
-
-const fetchCities = async () => {
-  try {
-    const response = await axios.get('/api/applications-by-city')
-
-    state.applications = response.data
-    isLoading.value = false
-  } catch (error) {
-    console.error('Error fetching applications: ', error)
-    isLoading.value = false
-  }
-}
-
-onMounted(() => {
-  fetchCities()
-})
+const offsetApplications = computed(() => offSetMarkers(result.value?.applications))
 </script>
 
 <template>
   <div
-    v-if="isLoading"
+    v-if="loading"
     class="h-[700px] w-[800px] rounded-md shadow-md bg-gray-200 flex justify-center items-center"
   >
     <svg
@@ -202,7 +196,7 @@ onMounted(() => {
       ></l-tile-layer>
       <div v-for="app in offsetApplications" :key="app.latlong">
         <l-marker :lat-lng="app.latlong">
-          <l-popup>{{ app.Company.name }}</l-popup></l-marker
+          <l-popup>{{ app.company.name }}</l-popup></l-marker
         >
       </div>
     </l-map>

@@ -17,8 +17,8 @@ const props = defineProps({
   },
   legendPosition: {
     type: String,
-    default: ''
-  }
+    default: '',
+  },
 })
 
 use([CanvasRenderer, PieChart, TitleComponent, TooltipComponent, LegendComponent])
