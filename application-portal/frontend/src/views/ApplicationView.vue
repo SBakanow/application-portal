@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PulseLoader from 'vue-spinner/src/PulseLoader.vue'
 import BackButton from '@/components/BackButton.vue'
@@ -8,6 +8,9 @@ import Modal from '@/components/Modal.vue'
 import CompanyForm from '@/components/CompanyForm.vue'
 import ApplicationForm from '@/components/ApplicationForm.vue'
 import axios from 'axios'
+import { getApplicationQuery } from '@/graphql/queries.js'
+import { updateApplicationMutation } from '@/graphql/mutations.js'
+import { useMutation, useQuery } from '@vue/apollo-composable'
 
 const route = useRoute()
 const router = useRouter()
@@ -34,6 +37,8 @@ const state = reactive({
   application: {},
   isLoading: true,
 })
+
+const { result, loading } = useQuery(getApplicationQuery, { applicationId })
 
 const deleteApplication = async () => {
   try {
@@ -92,7 +97,7 @@ const pick = (obj, keys) => {
 }
 
 const createApplication = () => {
-  const filteredApplicationData = pick(state.application, [
+  const filteredApplicationData = pick(result.value?.application, [
     'title',
     'type',
     'status',
@@ -112,7 +117,7 @@ const createApplication = () => {
 }
 
 const createCompany = () => {
-  const filteredCompanyData = pick(state.application.Company, [
+  const filteredCompanyData = pick(result.value?.application.company, [
     'name',
     'description',
     'contactEmail',
@@ -121,29 +126,38 @@ const createCompany = () => {
   Object.assign(company, filteredCompanyData)
 }
 
-const handleApplicationEdit = async () => {
-  const newApplication = {
-    type: application.type,
-    status: application.status,
-    title: application.title,
-    description: application.description,
-    minSalary: application.minSalary,
-    maxSalary: application.maxSalary,
-    location: application.location,
-    link: application.link,
-    skills: JSON.stringify(application.skills),
-  }
+const {
+  mutate: updateApplication,
+  onDone: onDoneApplication,
+  onError: onErrorApplication,
+} = useMutation(updateApplicationMutation)
 
-  try {
-    const response = await axios.put(`/api/applications/${applicationId}`, newApplication)
-    state.application = response.data
-    toast.success('Application updated successfully', toastOptions)
-    applicationEditing.value = false
-  } catch (error) {
-    console.error('Error updating application: ', error)
-    toast.error('Application could not be updated', toastOptions)
-  }
+const handleApplicationEdit = async () => {
+  updateApplication({
+    id: applicationId,
+    input: {
+      type: application.type,
+      status: application.status,
+      title: application.title,
+      description: application.description,
+      minSalary: application.minSalary,
+      maxSalary: application.maxSalary,
+      location: application.location,
+      link: application.link,
+      skills: application.skills,
+    },
+  })
 }
+
+onDoneApplication((_) => {
+  toast.success('Application updated successfully', toastOptions)
+  applicationEditing.value = false
+})
+
+onErrorApplication((error) => {
+  console.error('Error updating application: ', error)
+  toast.error('Application could not be updated', toastOptions)
+})
 
 const handleCompanyEdit = async () => {
   const newCompany = {
@@ -167,8 +181,9 @@ const steps = ['Pending', 'Interview', 'Accepted', 'Rejected']
 
 const getStepTitle = (index) => {
   if (index === 3) {
-    return state.application.status === 'Accepted' || state.application.status === 'Rejected'
-      ? state.application.status //
+    return result.value?.application.status === 'Accepted' ||
+      result.value?.application.status === 'Rejected'
+      ? result.value?.application.status //
       : 'Accepted/Rejected'
   }
   return steps[index - 1]
@@ -182,32 +197,30 @@ const calculateLineWidth = () => {
     Rejected: '96%',
   }
 
-  return stepWidths[state.application.status] || '0%'
+  return stepWidths[result.value?.application.status] || '0%'
 }
 
 const getBaseUrl = (url) => {
   const regex = /^(https?:\/\/[^/]+\/)/
   const match = url.match(regex)
-  return match ? match[1] : null
+  return match ? match[1] : url
 }
 
-onMounted(async () => {
-  try {
-    const response = await axios.get(`/api/applications/${applicationId}`)
-    state.application = response.data
-  } catch (error) {
-    console.error('Error fetching application: ', error)
-  } finally {
-    state.isLoading = false
-    createApplication()
-    createCompany()
-  }
-})
+watch(
+  () => result.value,
+  (newValue) => {
+    if (newValue && newValue.application) {
+      createApplication()
+      createCompany()
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
   <BackButton />
-  <section v-if="!state.isLoading">
+  <section v-if="!loading">
     <div class="container m-auto py-10 px-6">
       <div class="grid grid-cols-1 md:grid-cols-70-30 w-full gap-6">
         <main>
@@ -219,9 +232,9 @@ onMounted(async () => {
                     <div
                       class="progress-line"
                       :class="{
-                        interview: state.application.status === 'Interview',
-                        accepted: state.application.status === 'Accepted',
-                        rejected: state.application.status === 'Rejected',
+                        interview: result.application.status === 'Interview',
+                        accepted: result.application.status === 'Accepted',
+                        rejected: result.application.status === 'Rejected',
                       }"
                       :style="{ width: calculateLineWidth() }"
                     ></div>
@@ -231,41 +244,41 @@ onMounted(async () => {
                       :key="index"
                       :data-title="getStepTitle(index)"
                       :class="{
-                        pending: state.application.status === 'Pending' && index === 1,
-                        interview: state.application.status === 'Interview' && index <= 2,
-                        accepted: state.application.status === 'Accepted' && index <= 3,
-                        rejected: state.application.status === 'Rejected' && index <= 3,
+                        pending: result.application.status === 'Pending' && index === 1,
+                        interview: result.application.status === 'Interview' && index <= 2,
+                        accepted: result.application.status === 'Accepted' && index <= 3,
+                        rejected: result.application.status === 'Rejected' && index <= 3,
                       }"
                     ></div>
                   </div>
                 </div>
 
-                <div class="text-gray-500 mb-4">{{ state.application.type }}</div>
+                <div class="text-gray-500 mb-4">{{ result.application.type }}</div>
 
-                <h1 class="text-3xl font-bold mb-4">{{ state.application.title }}</h1>
+                <h1 class="text-3xl font-bold mb-4">{{ result.application.title }}</h1>
                 <div class="text-gray-500 mb-4 flex align-middle justify-center md:justify-start">
                   <i class="pi pi-map-marker text-lg text-orange-700 mr-2"></i>
-                  <p class="text-orange-700">{{ state.application.location }}</p>
+                  <p class="text-orange-700">{{ result.application.location }}</p>
                 </div>
                 <div class="py-6">
                   <h3 class="text-cyan-800 text-lg font-bold mb-6">Job Description</h3>
 
                   <p class="mb-4">
-                    {{ state.application.description }}
+                    {{ result.application.description }}
                   </p>
 
                   <h3 class="text-cyan-800 text-lg font-bold mb-2">Salary</h3>
 
                   <p class="mb-4">
-                    {{ state.application.minSalary / 1000 }}K -
-                    {{ state.application.maxSalary / 1000 }}K €/Year
+                    {{ result.application.minSalary / 1000 }}K -
+                    {{ result.application.maxSalary / 1000 }}K €/Year
                   </p>
 
                   <h3 class="text-cyan-800 text-lg font-bold mb-2">Link</h3>
 
                   <div class="mb-4">
-                    <a :href="state.application.link" target="_blank">{{
-                      getBaseUrl(state.application.link)
+                    <a :href="result.application.link" target="_blank">{{
+                      getBaseUrl(result.application.link)
                     }}</a>
                   </div>
 
@@ -273,7 +286,7 @@ onMounted(async () => {
                   <div class="w-full flex flex-wrap space-x-2 mb-2">
                     <div
                       class="px-3 py-1 my-1 flex items-center text-sm rounded-full shadow-md bg-slate-800 text-white"
-                      v-for="chip of state.application.skills"
+                      v-for="chip of result.application.skills"
                       :key="chip.id"
                     >
                       {{ chip }}
@@ -316,10 +329,10 @@ onMounted(async () => {
               <div v-if="!companyEditing" class="relative">
                 <h3 class="text-xl text-cyan-800 font-bold mb-6">Company Info</h3>
 
-                <h2 class="text-2xl">{{ state.application.Company.name }}</h2>
+                <h2 class="text-2xl">{{ result.application.company.name }}</h2>
 
                 <p class="my-2">
-                  {{ state.application.Company.description }}
+                  {{ result.application.company.description }}
                 </p>
 
                 <hr class="my-4" />
@@ -327,13 +340,13 @@ onMounted(async () => {
                 <h3 class="text-lg">Contact Email:</h3>
 
                 <p class="my-2 py-2 font-bold">
-                  {{ state.application.Company.contactEmail }}
+                  {{ result.application.company.contactEmail }}
                 </p>
 
                 <h3 class="text-lg">Contact Phone:</h3>
 
                 <p class="my-2 py-2 font-bold">
-                  {{ state.application.Company.contactPhone }}
+                  {{ result.application.company.contactPhone }}
                 </p>
               </div>
               <div v-else class="relative">
