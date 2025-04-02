@@ -10,9 +10,9 @@ const applicationTypeDef = gql`
     status: String!
     description: String!
     location: String!
-    latlong: [String!]!
-    minSalary: Int!
-    maxSalary: Int!
+    latlong: [Float!]!
+    minSalary: String!
+    maxSalary: String!
     link: String!
     skills: [String!]
     reminderEmailSent: Boolean!
@@ -27,9 +27,9 @@ const applicationTypeDef = gql`
     status: String!
     description: String!
     location: String!
-    latlong: [String!]!
-    minSalary: Int!
-    maxSalary: Int!
+    latlong: [Float!]!
+    minSalary: String!
+    maxSalary: String!
     link: String!
     skills: [String!]
     company: AddCompanyInput!
@@ -41,9 +41,9 @@ const applicationTypeDef = gql`
     status: String
     description: String
     location: String
-    latlong: [String!]
-    minSalary: Int
-    maxSalary: Int
+    latlong: [Float!]
+    minSalary: String
+    maxSalary: String
     link: String
     skills: [String!]
     reminderEmailSent: Boolean

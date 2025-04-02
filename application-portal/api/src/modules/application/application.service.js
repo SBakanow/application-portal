@@ -41,19 +41,39 @@ const createCSV = async (data) => {
 }
 
 const createApplication = async (applicationData, companyData) => {
-  let company = await Company.findOne({
+  const [company, created] = await Company.findOrCreate({
     where: { name: companyData.name },
+    defaults: companyData,
   })
+
   if (!company) {
-    company = await Company.create(companyData)
-  } else {
-    await Company.update(companyData, {
-      where: {
-        id: company.id,
-      },
-    })
+    throw new Error('Failed to find or create company')
   }
-  return await Application.create({ ...applicationData, CompanyId: company.id })
+
+  if (!created) {
+    await Company.update(companyData, { where: { id: company.id } })
+  }
+
+  const newApplication = await Application.create({
+    ...applicationData,
+    latlong: JSON.stringify(applicationData.latlong),
+    skills: JSON.stringify(applicationData.skills || []),
+    CompanyId: company.id,
+  })
+
+  if (!newApplication) {
+    throw new Error('Failed to create application')
+  }
+
+  try {
+    return {
+      ...newApplication.toJSON(),
+      latlong: JSON.parse(newApplication.latlong),
+      skills: JSON.parse(newApplication.skills),
+    }
+  } catch (error) {
+    throw new Error('Error parsing JSON fields for skills or latlong')
+  }
 }
 
 const getAllApplications = async (filters = {}) => {
@@ -84,7 +104,6 @@ const getAllApplications = async (filters = {}) => {
   } catch (error) {
     throw new Error('Error parsing JSON fields for skills or latlong')
   }
-
   return applications
 }
 
@@ -159,11 +178,18 @@ const getApplicationsForCSV = async () => {
 }
 
 const updateApplication = async (id, data) => {
-  const [affectedCount] = await Application.update(data, {
-    where: {
-      id,
+  const [affectedCount] = await Application.update(
+    {
+      ...data,
+      latlong: JSON.stringify(data.latlong),
+      skills: JSON.stringify(data.skills || []),
     },
-  })
+    {
+      where: {
+        id,
+      },
+    }
+  )
 
   if (affectedCount === 0) {
     throw new Error(`Application with ID ${id} could not be updated`)
