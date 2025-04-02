@@ -51,17 +51,14 @@ const applicationResolvers = {
   Mutation: {
     async createApplication(_, { input }) {
       const { company: companyData, ...applicationData } = input
-
-      const newApplication = await applicationService.createApplication(
-        applicationData,
-        companyData
-      )
-
-      if (!newApplication) {
-        throw new Error(`Application could not be created`)
+      try {
+        return await applicationService.createApplication(
+          applicationData,
+          companyData
+        )
+      } catch (error) {
+        throw new Error('Failed to create application: ', error.message)
       }
-
-      return newApplication
     },
     async updateApplication(_, { id, input }) {
       try {
