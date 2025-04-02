@@ -2,8 +2,8 @@
 import PieChart from './PieChart.vue'
 import Map from './Map.vue'
 import { computed } from 'vue'
-import { gql } from 'graphql-tag'
 import { useQuery } from '@vue/apollo-composable'
+import { getCountByStatusQuery, getCountByTypeQuery } from '@/graphql/queries'
 
 const fetchData = (query, key) => {
   const { result, loading, error } = useQuery(query)
@@ -33,30 +33,12 @@ const fetchData = (query, key) => {
   }
 }
 
-const countByTypeQuery = gql`
-  query getCountByTypeQuery {
-    applicationCountByType {
-      count
-      type
-    }
-  }
-`
-
-const countByStatusQuery = gql`
-  query getCountByStatusQuery {
-    applicationCountByStatus {
-      count
-      status
-    }
-  }
-`
-
 const { data: typeSeriesData, legendData: typeLegendData } = fetchData(
-  countByTypeQuery,
+  getCountByTypeQuery,
   'applicationCountByType',
 )
 const { data: statusSeriesData, legendData: statusLegendData } = fetchData(
-  countByStatusQuery,
+  getCountByStatusQuery,
   'applicationCountByStatus',
 )
 </script>
