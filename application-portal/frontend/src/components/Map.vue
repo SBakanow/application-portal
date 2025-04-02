@@ -2,7 +2,7 @@
 import 'leaflet/dist/leaflet.css'
 import { LMap, LTileLayer, LMarker, LPopup } from '@vue-leaflet/vue-leaflet'
 import { shallowRef, computed } from 'vue'
-import { gql } from 'graphql-tag'
+import { getApplicationsByCityQuery } from '@/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 
 const zoom = shallowRef(6)
@@ -12,18 +12,7 @@ const germanyBounds = shallowRef([
   [55.06, 15.04],
 ])
 
-const applicationsByCity = gql`
-  query getApplicationsByCity {
-    applications {
-      latlong
-      company {
-        name
-      }
-    }
-  }
-`
-
-const { result, loading } = useQuery(applicationsByCity)
+const { result, loading } = useQuery(getApplicationsByCityQuery)
 
 const offSetMarkers = (applications) => {
   const seenPositions = new Map()
@@ -33,11 +22,11 @@ const offSetMarkers = (applications) => {
 
     if (seenPositions.has(key)) {
       const count = seenPositions.get(key)
-      const offset = count * 0.001
+      const offset = count * 0.0001
       seenPositions.set(key, count + 1)
 
-      let lat = Number(app.latlong[0]) + offset
-      let long = Number(app.latlong[1]) + offset
+      let lat = app.latlong[0] + offset
+      let long = app.latlong[1] + offset
 
       return {
         ...app,
