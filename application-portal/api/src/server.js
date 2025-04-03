@@ -2,7 +2,8 @@ import { ApolloServer } from '@apollo/server'
 import { startStandaloneServer } from '@apollo/server/standalone'
 import typeDefs from './graphql/schema.js'
 import resolvers from './graphql/resolvers.js'
-import db from './models/index.js'
+import db from './database/initDb.js'
+import sendingEmail from './utils/emailService.js'
 
 const { sequelize } = db
 
@@ -23,6 +24,7 @@ const startServer = async () => {
   })
 
   console.log(`Server ready at ${url}`)
+  sendingEmail()
 }
 
 startServer()

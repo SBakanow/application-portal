@@ -1,7 +1,7 @@
 import { Sequelize } from 'sequelize'
-import { config } from '../config/database.config.js'
-import CompanyModel from './Company.js'
-import ApplicationModel from './Application.js'
+import { config } from './config.js'
+import CompanyModel from '../modules/company/company.model.js'
+import ApplicationModel from '../modules/application/application.model.js'
 
 const sequelize = new Sequelize(config.development)
 
