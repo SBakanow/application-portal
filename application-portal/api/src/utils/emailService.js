@@ -1,8 +1,14 @@
 import nodemailer from 'nodemailer'
 import 'dotenv/config'
-import applicationController from '../controllers/applicationController.js'
+import { ApolloClient, InMemoryCache } from '@apollo/client/core/core.cjs'
+import { gql } from 'graphql-tag'
 
-const sendReminderEmail = (application) => {
+const client = new ApolloClient({
+  uri: 'http://localhost:4000/graphql',
+  cache: new InMemoryCache(),
+})
+
+const sendApplicationReminderEmail = (application) => {
   return new Promise((resolve, reject) => {
     let transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -16,7 +22,7 @@ const sendReminderEmail = (application) => {
       from: process.env.EMAIL_USER,
       to: process.env.EMAIL_USER,
       subject: 'Application Reminder',
-      text: `The application for ${application.title} was 2 weeks ago.\nIt's time to ask ${application.Company?.name} for some feedback.`,
+      text: `The application for ${application.title} was 2 weeks ago.\nIt's time to ask ${application.company?.name} for some feedback.`,
     }
 
     transporter.sendMail(mailOptions, (error, info) => {
@@ -29,33 +35,65 @@ const sendReminderEmail = (application) => {
   })
 }
 
-const sendingEmail = async () => {
+const sendPendingApplicationReminders = async () => {
   try {
-    const pendingApplications =
-      await applicationController.getPendingReminderApplications()
+    const { data } = await client.query({
+      query: gql`
+        query getApplications($status: String, $reminderEmailSent: Boolean) {
+          applications(status: $status, reminderEmailSent: $reminderEmailSent) {
+            id
+            title
+            createdAt
+            reminderEmailSent
+            company {
+              name
+            }
+          }
+        }
+      `,
+      variables: {
+        status: 'Pending',
+        reminderEmailSent: false,
+      },
+    })
+
     const twoWeeksAgo = new Date()
     twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14)
 
-    for (const application of pendingApplications) {
+    for (const application of data.applications) {
       if (new Date(application.createdAt) <= twoWeeksAgo) {
+        console.log(
+          `Trying to send reminder Email for application ${application.title} at ${application.company.name}`
+        )
         try {
-          await sendReminderEmail(application)
+          await sendApplicationReminderEmail(application)
           try {
-            const result =
-              await applicationController.updateApplicationReminderEmailSent(
-                application.id,
-                {
-                  reminderEmailSent: 1,
+            const { data } = await client.mutate({
+              mutation: gql`
+                mutation updateApplication(
+                  $id: ID!
+                  $input: EditApplicationInput!
+                ) {
+                  updateApplication(id: $id, input: $input) {
+                    reminderEmailSent
+                  }
                 }
-              )
+              `,
+              variables: {
+                id: application.id,
+                input: {
+                  reminderEmailSent: true,
+                },
+              },
+            })
 
-            if (result > 0) {
+            if (data) {
               console.log(
-                `Database updated for application: ${application.title}`
+                `ReminderEmailSent updated to ${data.reminderEmailSent} for application: ${application.title}`
               )
             } else {
               console.error(
-                `Failed to update database for application: ${application.title}`
+                `Failed to update ReminderEmailSent for application: ${application.title}`
               )
             }
           } catch (updateError) {
@@ -79,4 +117,4 @@ const sendingEmail = async () => {
   }
 }
 
-export default sendingEmail
+export default sendPendingApplicationReminders
