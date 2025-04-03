@@ -40,3 +40,23 @@ export const deleteApplicationMutation = gql`
     }
   }
 `
+
+export const updateCompanyMutation = gql`
+  mutation updateCompany($id: ID!, $input: EditCompanyInput!) {
+    updateCompany(id: $id, input: $input) {
+      id
+      name
+      description
+      contactEmail
+      contactPhone
+    }
+  }
+`
+
+export const deleteCompanyMutation = gql`
+  mutation deleteCompany($id: ID!) {
+    deleteCompany(id: $id) {
+      id
+    }
+  }
+`

@@ -7,9 +7,12 @@ import { useToast } from 'vue-toastification'
 import Modal from '@/components/Modal.vue'
 import CompanyForm from '@/components/CompanyForm.vue'
 import ApplicationForm from '@/components/ApplicationForm.vue'
-import axios from 'axios'
 import { getApplicationQuery } from '@/graphql/queries.js'
-import { updateApplicationMutation } from '@/graphql/mutations.js'
+import {
+  deleteApplicationMutation,
+  updateApplicationMutation,
+  updateCompanyMutation,
+} from '@/graphql/mutations.js'
 import { useMutation, useQuery } from '@vue/apollo-composable'
 
 const route = useRoute()
@@ -33,23 +36,7 @@ const toastOptions = {
 
 const applicationId = route.params.id
 
-const state = reactive({
-  application: {},
-  isLoading: true,
-})
-
 const { result, loading } = useQuery(getApplicationQuery, { applicationId })
-
-const deleteApplication = async () => {
-  try {
-    await axios.delete(`/api/applications/${applicationId}`)
-    toast.success('Application deleted successfully', toastOptions)
-    router.push('/applications')
-  } catch (error) {
-    console.error('Error deleting application: ', error)
-    toast.error('Application could not be deleted', toastOptions)
-  }
-}
 
 const modal = ref()
 
@@ -128,12 +115,10 @@ const createCompany = () => {
 
 const {
   mutate: updateApplication,
-  onDone: onDoneApplication,
-  onError: onErrorApplication,
-} = useMutation(updateApplicationMutation)
-
-const handleApplicationEdit = async () => {
-  updateApplication({
+  onDone: onApplicationUpdateDone,
+  onError: onApplicationUpdateError,
+} = useMutation(updateApplicationMutation, () => ({
+  variables: {
     id: applicationId,
     input: {
       type: application.type,
@@ -146,36 +131,64 @@ const handleApplicationEdit = async () => {
       link: application.link,
       skills: application.skills,
     },
-  })
-}
+  },
+}))
 
-onDoneApplication((_) => {
+onApplicationUpdateDone((_) => {
   toast.success('Application updated successfully', toastOptions)
   applicationEditing.value = false
 })
 
-onErrorApplication((error) => {
+onApplicationUpdateError((error) => {
   console.error('Error updating application: ', error)
   toast.error('Application could not be updated', toastOptions)
 })
 
-const handleCompanyEdit = async () => {
-  const newCompany = {
-    name: company.name,
-    description: company.description,
-    contactEmail: company.contactEmail,
-    contactPhone: company.contactPhone,
-  }
-  try {
-    const response = await axios.put(`/api/companies/${state.application.Company.id}`, newCompany)
-    state.application.Company = response.data
-    toast.success('Company updated successfully', toastOptions)
-    companyEditing.value = false
-  } catch (error) {
-    console.error('Error updating company: ', error)
-    toast.error('Company could not be updated', toastOptions)
-  }
-}
+const {
+  mutate: deleteApplication,
+  onDone: onApplicationDeleteDone,
+  onError: onApplicationDeleteError,
+} = useMutation(deleteApplicationMutation, () => ({
+  variables: {
+    id: applicationId,
+  },
+}))
+
+onApplicationDeleteDone((_) => {
+  toast.success('Application deleted successfully', toastOptions)
+  router.push('/applications')
+})
+
+onApplicationDeleteError((error) => {
+  console.error('Error deleting application: ', error)
+  toast.error('Application could not be deleted', toastOptions)
+})
+
+const {
+  mutate: updateCompany,
+  onDone: onCompanyUpdateDone,
+  onError: onCompanyUpdateError,
+} = useMutation(updateCompanyMutation, () => ({
+  variables: {
+    id: result.value?.application.company.id,
+    input: {
+      name: company.name,
+      description: company.description,
+      contactEmail: company.contactEmail,
+      contactPhone: company.contactPhone,
+    },
+  },
+}))
+
+onCompanyUpdateDone(() => {
+  toast.success('Company updated successfully', toastOptions)
+  companyEditing.value = false
+})
+
+onCompanyUpdateError((error) => {
+  console.error('Error updating company: ', error)
+  toast.error('Company could not be updated', toastOptions)
+})
 
 const steps = ['Pending', 'Interview', 'Accepted', 'Rejected']
 
@@ -307,7 +320,7 @@ watch(
               </div>
               <div v-else class="relative">
                 <button
-                  @click.prevent="handleApplicationEdit"
+                  @click.prevent="updateApplication"
                   class="button bg-slate-800 hover:bg-slate-900 rounded-full shadow-md w-10 h-10 flex items-center justify-center absolute right-[-0.5rem] top-1.6"
                 >
                   <i class="pi pi-check text-lg text-white"></i>
@@ -362,7 +375,7 @@ watch(
               </div>
               <div v-else class="relative">
                 <button
-                  @click.prevent="handleCompanyEdit"
+                  @click.prevent="updateCompany"
                   class="button bg-slate-800 hover:bg-slate-900 rounded-full shadow-md w-10 h-10 flex items-center justify-center absolute right-[-0.5rem] top-1.6"
                 >
                   <i class="pi pi-check text-lg text-white"></i>
