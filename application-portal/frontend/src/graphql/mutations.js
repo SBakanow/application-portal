@@ -5,6 +5,16 @@ export const addApplicationMutation = gql`
     createApplication(input: $input) {
       id
       title
+      type
+      status
+      description
+      location
+      minSalary
+      maxSalary
+      createdAt
+      company {
+        name
+      }
     }
   }
 `
