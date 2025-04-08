@@ -7,6 +7,7 @@ import ApplicationForm from '@/components/ApplicationForm.vue'
 import axios from 'axios'
 import { useMutation } from '@vue/apollo-composable'
 import { addApplicationMutation } from '@/graphql/mutations.js'
+import { getApplicationsQuery } from '@/graphql/queries'
 
 const form = reactive({
   type: 'Full-Time',
@@ -72,26 +73,51 @@ const { mutate: addApplication, onDone, onError } = useMutation(addApplicationMu
 
 const handleSubmit = async () => {
   const latlong = await geoCodeCity(form.location)
-  addApplication({
-    input: {
-      type: form.type,
-      status: form.status,
-      title: form.title,
-      description: form.description,
-      minSalary: form.minSalary,
-      maxSalary: form.maxSalary,
-      location: form.location,
-      latlong: latlong,
-      link: form.link,
-      skills: form.skills,
-      company: {
-        name: form.Company.name,
-        description: form.Company.description,
-        contactEmail: form.Company.contactEmail,
-        contactPhone: form.Company.contactPhone,
+  addApplication(
+    {
+      input: {
+        type: form.type,
+        status: form.status,
+        title: form.title,
+        description: form.description,
+        minSalary: form.minSalary,
+        maxSalary: form.maxSalary,
+        location: form.location,
+        latlong: latlong,
+        link: form.link,
+        skills: form.skills,
+        company: {
+          name: form.Company.name,
+          description: form.Company.description,
+          contactEmail: form.Company.contactEmail,
+          contactPhone: form.Company.contactPhone,
+        },
       },
     },
-  })
+    {
+      update: (cache, { data }) => {
+        const newApp = data?.createApplication
+        if (!newApp) return
+
+        try {
+          const existingData = cache.readQuery({ query: getApplicationsQuery })
+          if (!existingData) return
+
+          data = {
+            ...data,
+            applications: [newApp, ...existingData.applications],
+          }
+
+          cache.writeQuery({
+            query: getApplicationsQuery,
+            data,
+          })
+        } catch (e) {
+          console.warn('Cache update skipped (possibly initial query not yet run)', e)
+        }
+      },
+    },
+  )
 }
 
 onDone((result) => {
