@@ -8,11 +8,7 @@ import Modal from '@/components/Modal.vue'
 import CompanyForm from '@/components/CompanyForm.vue'
 import ApplicationForm from '@/components/ApplicationForm.vue'
 import { getApplicationQuery } from '@/graphql/queries.js'
-import {
-  deleteApplicationMutation,
-  updateApplicationMutation,
-  updateCompanyMutation,
-} from '@/graphql/mutations.js'
+import { deleteApplicationMutation, updateApplicationMutation } from '@/graphql/mutations.js'
 import { useMutation, useQuery } from '@vue/apollo-composable'
 
 const route = useRoute()
@@ -130,19 +126,38 @@ const {
       location: application.location,
       link: application.link,
       skills: application.skills,
+      company: {
+        name: company.name,
+        description: company.description,
+        contactEmail: company.contactEmail,
+        contactPhone: company.contactPhone,
+      },
     },
   },
 }))
 
+let updateType = ''
+
 onApplicationUpdateDone((_) => {
-  toast.success('Application updated successfully', toastOptions)
-  applicationEditing.value = false
+  toast.success(`${updateType} updated successfully`, toastOptions)
 })
 
 onApplicationUpdateError((error) => {
   console.error('Error updating application: ', error)
   toast.error('Application could not be updated', toastOptions)
 })
+
+const handleUpdate = (type) => {
+  updateType = type
+
+  if (type === 'Application') {
+    applicationEditing.value = false
+  } else if (type === 'Company') {
+    companyEditing.value = false
+  }
+
+  updateApplication()
+}
 
 const {
   mutate: deleteApplication,
@@ -164,31 +179,6 @@ onApplicationDeleteError((error) => {
   toast.error('Application could not be deleted', toastOptions)
 })
 
-const {
-  mutate: updateCompany,
-  onDone: onCompanyUpdateDone,
-  onError: onCompanyUpdateError,
-} = useMutation(updateCompanyMutation, () => ({
-  variables: {
-    id: result.value?.application.company.id,
-    input: {
-      name: company.name,
-      description: company.description,
-      contactEmail: company.contactEmail,
-      contactPhone: company.contactPhone,
-    },
-  },
-}))
-
-onCompanyUpdateDone(() => {
-  toast.success('Company updated successfully', toastOptions)
-  companyEditing.value = false
-})
-
-onCompanyUpdateError((error) => {
-  console.error('Error updating company: ', error)
-  toast.error('Company could not be updated', toastOptions)
-})
 
 const steps = ['Pending', 'Interview', 'Accepted', 'Rejected']
 
@@ -320,7 +310,7 @@ watch(
               </div>
               <div v-else class="relative">
                 <button
-                  @click.prevent="updateApplication"
+                  @click.prevent="handleUpdate('Application')"
                   class="button bg-slate-800 hover:bg-slate-900 rounded-full shadow-md w-10 h-10 flex items-center justify-center absolute right-[-0.5rem] top-1.6"
                 >
                   <i class="pi pi-check text-lg text-white"></i>
@@ -375,7 +365,7 @@ watch(
               </div>
               <div v-else class="relative">
                 <button
-                  @click.prevent="updateCompany"
+                  @click.prevent="handleUpdate('Company')"
                   class="button bg-slate-800 hover:bg-slate-900 rounded-full shadow-md w-10 h-10 flex items-center justify-center absolute right-[-0.5rem] top-1.6"
                 >
                   <i class="pi pi-check text-lg text-white"></i>

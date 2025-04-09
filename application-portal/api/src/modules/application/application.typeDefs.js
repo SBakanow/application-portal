@@ -47,6 +47,7 @@ const applicationTypeDef = gql`
     link: String
     skills: [String!]
     reminderEmailSent: Boolean
+    company: EditCompanyInput
   }
 
   type CountByType {

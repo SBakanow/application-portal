@@ -1,6 +1,4 @@
-import db from '../../database/initDb.js'
-
-const { sequelize, Application, Company } = db
+import Application from './application.schema.js'
 
 const createCSV = async (data) => {
   const header = [
@@ -27,7 +25,7 @@ const createCSV = async (data) => {
     header.join(';'),
     ...data.map((entry) => {
       const row = {
-        name: entry.Company?.name || '',
+        name: entry.company?.name || '',
         ...entry,
       }
 
@@ -41,172 +39,171 @@ const createCSV = async (data) => {
 }
 
 const createApplication = async (applicationData, companyData) => {
-  const [company, created] = await Company.findOrCreate({
-    where: { name: companyData.name },
-    defaults: companyData,
-  })
-
-  if (!company) {
-    throw new Error('Failed to find or create company')
-  }
-
-  if (!created) {
-    await Company.update(companyData, { where: { id: company.id } })
-  }
-
-  const newApplication = await Application.create({
-    ...applicationData,
-    latlong: JSON.stringify(applicationData.latlong),
-    skills: JSON.stringify(applicationData.skills || []),
-    CompanyId: company.id,
-  })
-
-  if (!newApplication) {
-    throw new Error('Failed to create application')
-  }
-
   try {
-    return {
-      ...newApplication.toJSON(),
-      latlong: JSON.parse(newApplication.latlong),
-      skills: JSON.parse(newApplication.skills),
+    if (!companyData || !companyData.name) {
+      throw new Error('Company data is missing or invalid')
     }
+
+    const newApplication = await Application.create({
+      ...applicationData,
+      company: companyData,
+    })
+
+    if (!newApplication) {
+      throw new Error('Failed to create application in MongoDB')
+    }
+
+    return newApplication.toObject()
   } catch (error) {
-    throw new Error('Error parsing JSON fields for skills or latlong')
+    console.error('Error creating application:', error.message)
+    throw new Error(`Failed to create application: ${error.message}`)
   }
 }
 
 const getAllApplications = async (filters = {}) => {
-  const where = {}
+  const query = {}
 
   if (filters.status) {
-    where.status = filters.status
+    query.status = filters.status
   }
+
   if (filters.reminderEmailSent !== undefined) {
-    where.reminderEmailSent = filters.reminderEmailSent
+    query.reminderEmailSent = filters.reminderEmailSent
   }
 
-  const applications = await Application.findAll({
-    where,
-    include: Company,
-    order: [['createdAt', 'DESC']],
-  })
-
-  if (applications.length === 0) {
-    throw new Error('No applications found')
-  }
-  // Parsing JSON fields to get arrays
   try {
-    applications.forEach((app) => {
-      app.skills = JSON.parse(app.skills)
-      app.latlong = JSON.parse(app.latlong)
-    })
+    const applications = await Application.find(query)
+      .sort({ createdAt: -1 })
+      .exec()
+
+    if (applications.length === 0) {
+      throw new Error('No applications found in MongoDB')
+    }
+
+    return applications
   } catch (error) {
-    throw new Error('Error parsing JSON fields for skills or latlong')
+    console.error('Error fetching applications:', error.message)
+    throw new Error(`Failed to fetch applications: ${error.message}`)
   }
-  return applications
 }
 
 const getApplication = async (id) => {
-  const application = await Application.findByPk(id, {
-    include: Company,
-  })
-
-  if (!application) {
-    throw new Error(`Application with ID ${id} not found`)
-  }
-  // Parsing JSON fields to get arrays
   try {
-    application.skills = JSON.parse(application.skills)
-    application.latlong = JSON.parse(application.latlong)
-  } catch (error) {
-    throw new Error('Error parsing JSON fields for skills or latlong')
-  }
+    const application = await Application.findById(id).exec()
 
-  return application
+    if (!application) {
+      throw new Error(`No application found with ID ${id}`)
+    }
+    return application
+  } catch (error) {
+    console.error('Error fetching application:', error.message)
+    throw new Error(`Failed to fetch application: ${error.message}`)
+  }
 }
 
 const getCountByType = async () => {
-  const results = await Application.findAll({
-    attributes: [
-      'type',
-      [sequelize.fn('COUNT', sequelize.col('type')), 'count'],
-    ],
-    group: ['type'],
-  })
+  try {
+    const results = await Application.aggregate([
+      {
+        $group: {
+          _id: '$type',
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          type: '$_id',
+          count: 1,
+        },
+      },
+    ])
 
-  if (results.length === 0) {
-    throw new Error('No applications found')
+    if (results.length === 0) {
+      throw new Error('No applications found')
+    }
+
+    return results
+  } catch (error) {
+    console.error('Error fetching count by type:', error.message)
+    throw new Error(`Failed to fetch count by type: ${error.message}`)
   }
-
-  return results.map((result) => result.toJSON())
 }
 
 const getCountByStatus = async () => {
-  const results = await Application.findAll({
-    attributes: [
-      'status',
-      [sequelize.fn('COUNT', sequelize.col('status')), 'count'],
-    ],
-    group: ['status'],
-  })
+  try {
+    const results = await Application.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          status: '$_id',
+          count: 1,
+        },
+      },
+    ])
 
-  if (results.length === 0) {
-    throw new Error('No applications found')
+    if (results.length === 0) {
+      throw new Error('No applications found')
+    }
+
+    return results
+  } catch (error) {
+    console.error('Error fetching count by status:', error.message)
+    throw new Error(`Failed to fetch count by status: ${error.message}`)
   }
-
-  return results.map((result) => result.toJSON())
 }
 
 const getApplicationsForCSV = async () => {
-  const results = await Application.findAll({
-    attributes: ['title', 'type', 'status', 'location', 'link', 'createdAt'],
-    include: [
-      {
-        model: Company,
-        attributes: ['name'],
-      },
-    ],
-  })
+  try {
+    const applications = await Application.find(
+      {},
+      'title type status location link createdAt company.name'
+    )
+      .sort({ createdAt: 1 })
+      .lean()
+      .exec()
 
-  if (results.length === 0) {
-    throw new Error('No applications found')
+    if (applications.length === 0) {
+      throw new Error('No applications found in MongoDB')
+    }
+
+    return await createCSV(applications)
+  } catch (error) {
+    console.error('Error creating csv:', error.message)
+    throw new Error(`Error creating csv: ${error.message}`)
   }
-
-  const applications = results.map((result) => result.toJSON())
-  return await createCSV(applications)
 }
 
 const updateApplication = async (id, data) => {
-  const [affectedCount] = await Application.update(
-    {
-      ...data,
-      latlong: JSON.stringify(data.latlong),
-      skills: JSON.stringify(data.skills || []),
-    },
-    {
-      where: {
-        id,
-      },
+  try {
+    const application = await Application.findOneAndUpdate(
+      { _id: id },
+      { $set: data },
+      { new: true }
+    )
+
+    if (!application) {
+      throw new Error('No application found to update in MongoDB')
     }
-  )
 
-  if (affectedCount === 0) {
-    throw new Error(`Application with ID ${id} could not be updated`)
+    return application
+  } catch (error) {
+    console.error('Error updating application:', error.message)
+    throw new Error(`Error updating application: ${error.message}`)
   }
-
-  return await getApplication(id)
 }
 
 const deleteApplication = async (id) => {
   try {
-    const application = await getApplication(id)
+    const application = await Application.findOneAndDelete({ _id: id })
 
-    const deletedCount = await Application.destroy({
-      where: { id },
-    })
-
-    if (deletedCount === 0) {
+    if (!application) {
       throw new Error(`Failed to delete application with ID ${id}`)
     }
 

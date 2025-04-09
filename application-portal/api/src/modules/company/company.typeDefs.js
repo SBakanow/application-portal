@@ -9,8 +9,6 @@ const companyTypeDef = gql`
     description: String!
     contactEmail: String!
     contactPhone: String
-    createdAt: DateTime!
-    updatedAt: DateTime!
     applications: [Application!]
   }
 
@@ -26,18 +24,6 @@ const companyTypeDef = gql`
     description: String
     contactEmail: String
     contactPhone: String
-  }
-
-  type Query {
-    companies: [Company!]
-    company(id: ID!): Company!
-    companyByName(name: String!): Company!
-  }
-
-  type Mutation {
-    createCompany(input: AddCompanyInput!): Company!
-    updateCompany(id: ID!, input: EditCompanyInput!): Company!
-    deleteCompany(id: ID!): Company
   }
 `
 
