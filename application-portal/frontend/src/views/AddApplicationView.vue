@@ -7,7 +7,7 @@ import ApplicationForm from '@/components/ApplicationForm.vue'
 import axios from 'axios'
 import { useMutation } from '@vue/apollo-composable'
 import { addApplicationMutation } from '@/graphql/mutations.js'
-import { getApplicationsQuery } from '@/graphql/queries'
+import { getApplicationsQuery, getCountByStatusQuery, getCountByTypeQuery } from '@/graphql/queries'
 
 const form = reactive({
   type: 'Full-Time',
@@ -100,18 +100,54 @@ const handleSubmit = async () => {
         if (!newApp) return
 
         try {
-          const existingData = cache.readQuery({ query: getApplicationsQuery })
-          if (!existingData) return
+          const existingApplicationsData = cache.readQuery({ query: getApplicationsQuery })
+          if (existingApplicationsData) {
+            const updatedApplications = [newApp, ...existingApplicationsData.applications]
 
-          data = {
-            ...data,
-            applications: [newApp, ...existingData.applications],
+            cache.writeQuery({
+              query: getApplicationsQuery,
+              data: { ...data, applications: updatedApplications },
+            })
           }
 
-          cache.writeQuery({
-            query: getApplicationsQuery,
-            data,
-          })
+          const existingTypeData = cache.readQuery({ query: getCountByTypeQuery })
+          if (existingTypeData) {
+            const typeExists = existingTypeData.applicationCountByType.find(
+              (item) => item.type === newApp.type,
+            )
+
+            const updatedTypeData = typeExists
+              ? existingTypeData.applicationCountByType.map((item) =>
+                  item.type === newApp.type ? { ...item, count: item.count + 1 } : item,
+                )
+              : [...existingTypeData.applicationCountByType, { type: newApp.type, count: 1 }]
+
+            cache.writeQuery({
+              query: getCountByTypeQuery,
+              data: { ...data, applicationCountByType: updatedTypeData },
+            })
+          }
+
+          const existingStatusData = cache.readQuery({ query: getCountByStatusQuery })
+          if (existingStatusData) {
+            const statusExists = existingStatusData.applicationCountByStatus.find(
+              (item) => item.status === newApp.status,
+            )
+
+            const updatedStatusData = statusExists
+              ? existingStatusData.applicationCountByStatus.map((item) =>
+                  item.status === newApp.status ? { ...item, count: item.count + 1 } : item,
+                )
+              : [
+                  ...existingStatusData.applicationCountByStatus,
+                  { status: newApp.status, count: 1 },
+                ]
+
+            cache.writeQuery({
+              query: getCountByStatusQuery,
+              data: { ...data, applicationCountByStatus: updatedStatusData },
+            })
+          }
         } catch (e) {
           console.warn('Cache update skipped (possibly initial query not yet run)', e)
         }
