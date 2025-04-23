@@ -7,7 +7,11 @@ import { useToast } from 'vue-toastification'
 import Modal from '@/components/Modal.vue'
 import CompanyForm from '@/components/CompanyForm.vue'
 import ApplicationForm from '@/components/ApplicationForm.vue'
-import { getApplicationQuery } from '@/graphql/queries.js'
+import {
+  getApplicationQuery,
+  getCountByStatusQuery,
+  getCountByTypeQuery,
+} from '@/graphql/queries.js'
 import { deleteApplicationMutation, updateApplicationMutation } from '@/graphql/mutations.js'
 import { useMutation, useQuery } from '@vue/apollo-composable'
 
@@ -134,6 +138,7 @@ const {
       },
     },
   },
+  refetchQueries: [{ query: getCountByTypeQuery }, { query: getCountByStatusQuery }],
 }))
 
 let updateType = ''
@@ -178,7 +183,6 @@ onApplicationDeleteError((error) => {
   console.error('Error deleting application: ', error)
   toast.error('Application could not be deleted', toastOptions)
 })
-
 
 const steps = ['Pending', 'Interview', 'Accepted', 'Rejected']
 
