@@ -92,3 +92,6 @@ Thumbs.db
 
 # SQLite Database File
 *.sqlite
+
+# Nodemon config
+nodemon.json
