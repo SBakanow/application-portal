@@ -1,6 +1,14 @@
 <script setup>
 import { RouterLink, useRoute } from 'vue-router'
-import logo from '@/assets/img/logo.png'
+import router from '@/router'
+import { useAuthStore } from '@/store/authStore'
+
+const authStore = useAuthStore()
+
+const logout = async () => {
+  await authStore.logout()
+  router.push('/login')
+}
 
 const isActiveLink = (routePath) => {
   const route = useRoute()
@@ -65,6 +73,13 @@ const isActiveLink = (routePath) => {
               >
                 Add Application
               </RouterLink>
+              <button
+                v-if="authStore.isAuthenticated"
+                @click="logout"
+                class="button bg-[#0f172b] hover:bg-slate-900 rounded-full shadow-md w-10 h-10 flex items-center justify-center"
+              >
+                <i class="pi pi-sign-out text-lg text-white"></i>
+              </button>
             </div>
           </div>
         </div>
