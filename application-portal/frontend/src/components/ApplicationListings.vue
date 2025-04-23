@@ -1,11 +1,13 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 import ApplicationListing from '@/components/ApplicationListing.vue'
-import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import SkeletonApplicationListing from './SkeletonApplicationListing.vue'
 import Modal from './Modal.vue'
 import Filter from './Filter.vue'
-import axios from 'axios'
+import { getApplicationsQuery } from '@/graphql/queries'
+import { useQuery } from '@vue/apollo-composable'
+import DownloadCsv from './DownloadCsv.vue'
 
 defineProps({
   limit: Number,
@@ -18,10 +20,8 @@ defineProps({
     default: true,
   },
 })
-const state = reactive({
-  applications: [],
-  isLoading: true,
-})
+
+const { result, loading } = useQuery(getApplicationsQuery)
 
 const filters = ref({
   type: [],
@@ -33,12 +33,8 @@ const searchQuery = ref('')
 
 const modal = ref()
 
-const showModal = () => {
-  modal.value.show()
-}
-
 const filteredApplications = computed(() => {
-  return state.applications.filter((app) => {
+  return result.value?.applications.filter((app) => {
     const typeMatches =
       filters.value.type.length === 0 ||
       filters.value.type.some((type) => app.type.toLowerCase() === type.toLowerCase())
@@ -53,7 +49,7 @@ const filteredApplications = computed(() => {
       !searchQuery.value ||
       app.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       app.location.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      app.Company.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+      app.company.name.toLowerCase().includes(searchQuery.value.toLowerCase())
 
     return typeMatches && statusMatches && salaryMatches && searchMatches
   })
@@ -61,45 +57,21 @@ const filteredApplications = computed(() => {
 
 const handleClickOutside = (event) => {
   if (!modal.value) return
-  const rect = modal.value.$el.getBoundingClientRect()
-  const isInDialog =
-    rect.top <= event.clientY &&
-    event.clientY <= rect.top + rect.height &&
-    rect.left <= event.clientX &&
-    event.clientX <= rect.left + rect.width
-  if (modal.value.visible && !isInDialog) {
+  const { top, left, width, height } = modal.value.$el.getBoundingClientRect()
+  if (
+    modal.value.visible &&
+    !(
+      left <= event.clientX &&
+      event.clientX <= left + width &&
+      top <= event.clientY &&
+      event.clientY <= top + height
+    )
+  ) {
     modal.value.cancel()
   }
 }
 
-const csv = ref()
-
-const downloadCSV = async () => {
-  try {
-    const response = await axios.get('/api/applications-csv')
-    csv.value = await response.data
-  } catch (error) {
-    console.error('Error downloading CSV: ', error)
-  } finally {
-    const blob = new Blob([csv.value], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const hiddenElement = document.createElement('a')
-    hiddenElement.href = url
-    hiddenElement.download = 'applications.csv'
-    hiddenElement.click()
-    URL.revokeObjectURL(url)
-  }
-}
-
 onMounted(async () => {
-  try {
-    const response = await axios.get('/api/applications')
-    state.applications = response.data
-  } catch (error) {
-    console.error('Error fetching applications: ', error)
-  } finally {
-    state.isLoading = false
-  }
   document.addEventListener('mousedown', handleClickOutside)
 })
 
@@ -142,20 +114,12 @@ onUnmounted(() => {
             <Filter :filters="filters" />
           </Modal>
         </div>
-        <div>
-          <button
-            title="Download CSV"
-            @click.prevent="downloadCSV"
-            class="button bg-slate-800 hover:bg-slate-900 rounded-full shadow-md w-10 h-10 flex items-center justify-center cursor-pointer"
-          >
-            <i class="pi pi-download text-lg text-white"></i>
-          </button>
-        </div>
+        <DownloadCsv />
       </div>
-      <div v-if="state.isLoading" class="text-center text-gray-500 py-6">
+      <div v-if="loading" class="text-center text-gray-500 py-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">
           <SkeletonApplicationListing
-            v-for="_ in filteredApplications.slice(0, limit || filteredApplications.length)"
+            v-for="_ in filteredApplications?.slice(0, limit || filteredApplications?.length)"
           />
         </div>
       </div>

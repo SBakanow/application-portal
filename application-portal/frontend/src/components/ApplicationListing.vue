@@ -74,7 +74,7 @@ const statusColors = {
             <i class="pi pi-map-marker text-orange-700"></i>
             {{ application.location }}
           </div>
-          <div class="text-gray-600">{{ application.Company.name }}</div>
+          <div class="text-gray-600">{{ application.company.name }}</div>
         </div>
       </div>
     </div>

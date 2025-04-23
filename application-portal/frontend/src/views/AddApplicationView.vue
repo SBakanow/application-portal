@@ -5,6 +5,9 @@ import { useToast } from 'vue-toastification'
 import CompanyForm from '@/components/CompanyForm.vue'
 import ApplicationForm from '@/components/ApplicationForm.vue'
 import axios from 'axios'
+import { useMutation } from '@vue/apollo-composable'
+import { addApplicationMutation } from '@/graphql/mutations.js'
+import { getApplicationsQuery, getCountByStatusQuery, getCountByTypeQuery } from '@/graphql/queries'
 
 const form = reactive({
   type: 'Full-Time',
@@ -66,35 +69,102 @@ const geoCodeCity = async (cityName) => {
   }
 }
 
-const handleSubmit = async () => {
-  const newApplication = {
-    type: form.type,
-    status: form.status,
-    title: form.title,
-    description: form.description,
-    minSalary: form.minSalary,
-    maxSalary: form.maxSalary,
-    location: form.location,
-    latlong: JSON.stringify(await geoCodeCity(form.location)),
-    link: form.link,
-    skills: JSON.stringify(form.skills),
-    Company: {
-      name: form.Company.name,
-      description: form.Company.description,
-      contactEmail: form.Company.contactEmail,
-      contactPhone: form.Company.contactPhone,
-    },
-  }
+const { mutate: addApplication, onDone, onError } = useMutation(addApplicationMutation)
 
-  try {
-    const response = await axios.post('/api/applications', newApplication)
-    toast.success('Application added successfully', toastOptions)
-    router.push(`/applications/${response.data.id}`)
-  } catch (error) {
-    console.error('Error fetching applications: ', error)
-    toast.error('Application could not be added', toastOptions)
-  }
+const handleSubmit = async () => {
+  const latlong = await geoCodeCity(form.location)
+  addApplication(
+    {
+      input: {
+        type: form.type,
+        status: form.status,
+        title: form.title,
+        description: form.description,
+        minSalary: form.minSalary,
+        maxSalary: form.maxSalary,
+        location: form.location,
+        latlong: latlong,
+        link: form.link,
+        skills: form.skills,
+        company: {
+          name: form.Company.name,
+          description: form.Company.description,
+          contactEmail: form.Company.contactEmail,
+          contactPhone: form.Company.contactPhone,
+        },
+      },
+    },
+    {
+      update: (cache, { data }) => {
+        const newApp = data?.createApplication
+        if (!newApp) return
+
+        try {
+          const existingApplicationsData = cache.readQuery({ query: getApplicationsQuery })
+          if (existingApplicationsData) {
+            const updatedApplications = [newApp, ...existingApplicationsData.applications]
+
+            cache.writeQuery({
+              query: getApplicationsQuery,
+              data: { ...data, applications: updatedApplications },
+            })
+          }
+
+          const existingTypeData = cache.readQuery({ query: getCountByTypeQuery })
+          if (existingTypeData) {
+            const typeExists = existingTypeData.applicationCountByType.find(
+              (item) => item.type === newApp.type,
+            )
+
+            const updatedTypeData = typeExists
+              ? existingTypeData.applicationCountByType.map((item) =>
+                  item.type === newApp.type ? { ...item, count: item.count + 1 } : item,
+                )
+              : [...existingTypeData.applicationCountByType, { type: newApp.type, count: 1 }]
+
+            cache.writeQuery({
+              query: getCountByTypeQuery,
+              data: { ...data, applicationCountByType: updatedTypeData },
+            })
+          }
+
+          const existingStatusData = cache.readQuery({ query: getCountByStatusQuery })
+          if (existingStatusData) {
+            const statusExists = existingStatusData.applicationCountByStatus.find(
+              (item) => item.status === newApp.status,
+            )
+
+            const updatedStatusData = statusExists
+              ? existingStatusData.applicationCountByStatus.map((item) =>
+                  item.status === newApp.status ? { ...item, count: item.count + 1 } : item,
+                )
+              : [
+                  ...existingStatusData.applicationCountByStatus,
+                  { status: newApp.status, count: 1 },
+                ]
+
+            cache.writeQuery({
+              query: getCountByStatusQuery,
+              data: { ...data, applicationCountByStatus: updatedStatusData },
+            })
+          }
+        } catch (e) {
+          console.warn('Cache update skipped (possibly initial query not yet run)', e)
+        }
+      },
+    },
+  )
 }
+
+onDone((result) => {
+  toast.success('Application added successfully', toastOptions)
+  router.push(`/applications/${result.data.createApplication.id}`)
+})
+
+onError((error) => {
+  console.error('Error adding application:', error)
+  toast.error('Application could not be added', toastOptions)
+})
 </script>
 
 <template>
