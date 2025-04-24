@@ -19,6 +19,7 @@ const applicationTypeDef = gql`
     createdAt: DateTime!
     updatedAt: DateTime!
     company: Company!
+    user: String!
   }
 
   input AddApplicationInput {
@@ -33,6 +34,7 @@ const applicationTypeDef = gql`
     link: String!
     skills: [String!]
     company: AddCompanyInput!
+    user: String!
   }
 
   input EditApplicationInput {
@@ -61,15 +63,19 @@ const applicationTypeDef = gql`
   }
 
   type Query {
-    applications(status: String, reminderEmailSent: Boolean): [Application!]
+    applications(
+      user: String!
+      status: String
+      reminderEmailSent: Boolean
+    ): [Application!]
     application(id: ID!): Application!
-    applicationCountByType: [CountByType!]
-    applicationCountByStatus: [CountByStatus!]
-    applicationsCSV: String!
+    applicationCountByType(user: String!): [CountByType!]
+    applicationCountByStatus(user: String!): [CountByStatus!]
+    applicationsCSV(user: String!): String!
   }
 
   type Mutation {
-    createApplication(input: AddApplicationInput!): Application!
+    createApplication(user: String!, input: AddApplicationInput!): Application!
     updateApplication(id: ID!, input: EditApplicationInput!): Application!
     deleteApplication(id: ID!): Application
   }
