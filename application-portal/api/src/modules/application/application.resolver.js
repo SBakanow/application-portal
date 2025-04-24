@@ -16,33 +16,34 @@ const applicationResolvers = {
         throw new Error(`Failed to get application: ${error.message}`)
       }
     },
-    async applicationCountByType() {
+    async applicationCountByType(_, { user }) {
       try {
-        return await applicationService.getCountByType()
+        return await applicationService.getCountByType(user)
       } catch (error) {
         throw new Error(`Failed to get Count By Type: ${error.message}`)
       }
     },
-    async applicationCountByStatus() {
+    async applicationCountByStatus(_, { user }) {
       try {
-        return await applicationService.getCountByStatus()
+        return await applicationService.getCountByStatus(user)
       } catch (error) {
         throw new Error(`Failed to get Count By Status: ${error.message}`)
       }
     },
-    async applicationsCSV() {
+    async applicationsCSV(_, { user }) {
       try {
-        return await applicationService.getApplicationsForCSV()
+        return await applicationService.getApplicationsForCSV(user)
       } catch (error) {
         throw new Error(`Failed to generate CSV: ${error.message}`)
       }
     },
   },
   Mutation: {
-    async createApplication(_, { input }) {
+    async createApplication(_, { user, input }) {
       const { company: companyData, ...applicationData } = input
       try {
         return await applicationService.createApplication(
+          user,
           applicationData,
           companyData
         )

@@ -38,7 +38,7 @@ const createCSV = async (data) => {
   return csv
 }
 
-const createApplication = async (applicationData, companyData) => {
+const createApplication = async (user, applicationData, companyData) => {
   try {
     if (!companyData || !companyData.name) {
       throw new Error('Company data is missing or invalid')
@@ -47,6 +47,7 @@ const createApplication = async (applicationData, companyData) => {
     const newApplication = await Application.create({
       ...applicationData,
       company: companyData,
+      user,
     })
 
     if (!newApplication) {
@@ -61,7 +62,7 @@ const createApplication = async (applicationData, companyData) => {
 }
 
 const getAllApplications = async (filters = {}) => {
-  const query = {}
+  const query = { user: filters.user }
 
   if (filters.status) {
     query.status = filters.status
@@ -101,9 +102,14 @@ const getApplication = async (id) => {
   }
 }
 
-const getCountByType = async () => {
+const getCountByType = async (user) => {
   try {
     const results = await Application.aggregate([
+      {
+        $match: {
+          user: user,
+        },
+      },
       {
         $group: {
           _id: '$type',
@@ -130,9 +136,14 @@ const getCountByType = async () => {
   }
 }
 
-const getCountByStatus = async () => {
+const getCountByStatus = async (user) => {
   try {
     const results = await Application.aggregate([
+      {
+        $match: {
+          user: user,
+        },
+      },
       {
         $group: {
           _id: '$status',
@@ -159,10 +170,10 @@ const getCountByStatus = async () => {
   }
 }
 
-const getApplicationsForCSV = async () => {
+const getApplicationsForCSV = async (user) => {
   try {
     const applications = await Application.find(
-      {},
+      { user },
       'title type status location link createdAt company.name'
     )
       .sort({ createdAt: 1 })
