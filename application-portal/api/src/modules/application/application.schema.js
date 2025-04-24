@@ -22,6 +22,7 @@ const applicationSchema = new Schema(
     skills: [String],
     reminderEmailSent: { type: Boolean, default: false },
     company: { type: companySchema, required: true },
+    user: String,
   },
   {
     timestamps: true,
