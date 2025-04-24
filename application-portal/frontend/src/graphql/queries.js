@@ -1,8 +1,8 @@
 import { gql } from 'graphql-tag'
 
 export const getApplicationsQuery = gql`
-  query getApplications {
-    applications {
+  query getApplications($user: String!) {
+    applications(user: $user) {
       id
       title
       type
@@ -15,19 +15,20 @@ export const getApplicationsQuery = gql`
       company {
         name
       }
+      user
     }
   }
 `
 
 export const getApplicationsCSVQuery = gql`
-  query getApplicationsCsv {
-    applicationsCSV
+  query getApplicationsCsv($user: String!) {
+    applicationsCSV(user: $user)
   }
 `
 
 export const getApplicationsByCityQuery = gql`
-  query getApplicationsByCity {
-    applications {
+  query getApplicationsByCity($user: String!) {
+    applications(user: $user) {
       latlong
       company {
         name
@@ -37,8 +38,8 @@ export const getApplicationsByCityQuery = gql`
 `
 
 export const getCountByTypeQuery = gql`
-  query getCountByTypeQuery {
-    applicationCountByType {
+  query getCountByTypeQuery($user: String!) {
+    applicationCountByType(user: $user) {
       count
       type
     }
@@ -46,8 +47,8 @@ export const getCountByTypeQuery = gql`
 `
 
 export const getCountByStatusQuery = gql`
-  query getCountByStatusQuery {
-    applicationCountByStatus {
+  query getCountByStatusQuery($user: String!) {
+    applicationCountByStatus(user: $user) {
       count
       status
     }

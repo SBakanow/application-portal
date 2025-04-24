@@ -1,8 +1,8 @@
 import { gql } from 'graphql-tag'
 
 export const addApplicationMutation = gql`
-  mutation addApplication($input: AddApplicationInput!) {
-    createApplication(input: $input) {
+  mutation addApplication($user: String!, $input: AddApplicationInput!) {
+    createApplication(user: $user, input: $input) {
       id
       title
       type
@@ -15,6 +15,7 @@ export const addApplicationMutation = gql`
       company {
         name
       }
+      user
     }
   }
 `
