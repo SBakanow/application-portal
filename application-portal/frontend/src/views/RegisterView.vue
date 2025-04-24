@@ -2,16 +2,19 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { RouterLink } from 'vue-router'
+import CustomErrorTransition from '@/components/CustomErrorTransition.vue'
 import axios from 'axios'
 
 const username = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const router = useRouter()
+const errorMessage = ref(null)
 
 const handleRegister = async () => {
   if (password.value !== confirmPassword.value) {
-    console.error('Passwords do not match')
+    errorMessage.value = 'Passwords do not match'
+    hideErrorAfterDelay()
     return
   }
 
@@ -22,8 +25,19 @@ const handleRegister = async () => {
     })
     router.push({ name: 'login' })
   } catch (error) {
-    console.error('Registration failed:', error)
+    if (error.response && error.response.status == 409) {
+      errorMessage.value = 'Username already exists'
+    } else {
+      errorMessage.value = 'An error occurred during registration'
+    }
+    hideErrorAfterDelay()
   }
+}
+
+const hideErrorAfterDelay = () => {
+  setTimeout(() => {
+    errorMessage.value = null
+  }, 5000)
 }
 </script>
 
@@ -66,7 +80,7 @@ const handleRegister = async () => {
                 >Confirm Password</label
               >
               <input
-                v-model="password"
+                v-model="confirmPassword"
                 type="password"
                 id="confirm-password"
                 name="confirm-password"
@@ -75,6 +89,7 @@ const handleRegister = async () => {
                 required
               />
             </div>
+            <CustomErrorTransition :errorMessage="errorMessage" />
             <button
               class="button bg-slate-800 hover:bg-slate-900 text-white font-bold mt-4 py-2 px-4 rounded-lg w-full focus:outline-none focus:shadow-outline mb-6"
               type="submit"

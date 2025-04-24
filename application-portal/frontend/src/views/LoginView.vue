@@ -2,11 +2,15 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { RouterLink } from 'vue-router'
+import CustomErrorTransition from '@/components/CustomErrorTransition.vue'
+import { useAuthStore } from '@/store/authStore'
 import axios from 'axios'
 
 const username = ref('')
 const password = ref('')
 const router = useRouter()
+const errorMessage = ref(null)
+const authStore = useAuthStore()
 
 const handleLogin = async () => {
   try {
@@ -18,10 +22,24 @@ const handleLogin = async () => {
       },
       { withCredentials: true },
     )
+    await authStore.checkAuth()
     router.push({ name: 'home' })
   } catch (error) {
-    console.error('Login failed:', error)
+    if (error.response && error.response.status == 404) {
+      errorMessage.value = 'User not found'
+    } else if (error.response && error.response.status == 401) {
+      errorMessage.value = 'Invalid credentials'
+    } else {
+      errorMessage.value = 'An error occurred during registration'
+    }
+    hideErrorAfterDelay()
   }
+}
+
+const hideErrorAfterDelay = () => {
+  setTimeout(() => {
+    errorMessage.value = null
+  }, 5000)
 }
 </script>
 
@@ -59,6 +77,7 @@ const handleLogin = async () => {
                 required
               />
             </div>
+            <CustomErrorTransition :errorMessage="errorMessage" />
             <button
               class="button bg-slate-800 hover:bg-slate-900 text-white font-bold mt-4 py-2 px-4 rounded-lg w-full focus:outline-none focus:shadow-outline mb-6"
               type="submit"
