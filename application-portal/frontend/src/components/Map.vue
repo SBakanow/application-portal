@@ -4,6 +4,10 @@ import { LMap, LTileLayer, LMarker, LPopup } from '@vue-leaflet/vue-leaflet'
 import { shallowRef, computed } from 'vue'
 import { getApplicationsByCityQuery } from '@/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
+import { useAuthStore } from '@/store/authStore'
+
+const authStore = useAuthStore()
+const user = authStore.user.username
 
 const zoom = shallowRef(6)
 const center = shallowRef([45.0, 10.0])
@@ -12,7 +16,7 @@ const germanyBounds = shallowRef([
   [55.06, 15.04],
 ])
 
-const { result, loading } = useQuery(getApplicationsByCityQuery)
+const { result, loading } = useQuery(getApplicationsByCityQuery, { user })
 
 const offSetMarkers = (applications) => {
   const seenPositions = new Map()
@@ -39,7 +43,9 @@ const offSetMarkers = (applications) => {
   })
 }
 
-const offsetApplications = computed(() => offSetMarkers(result.value?.applications))
+const offsetApplications = computed(() =>
+  result.value ? offSetMarkers(result.value?.applications) : null,
+)
 </script>
 
 <template>

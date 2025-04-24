@@ -8,6 +8,10 @@ import axios from 'axios'
 import { useMutation } from '@vue/apollo-composable'
 import { addApplicationMutation } from '@/graphql/mutations.js'
 import { getApplicationsQuery, getCountByStatusQuery, getCountByTypeQuery } from '@/graphql/queries'
+import { useAuthStore } from '@/store/authStore'
+
+const authStore = useAuthStore()
+const user = authStore.user.username
 
 const form = reactive({
   type: 'Full-Time',
@@ -75,6 +79,7 @@ const handleSubmit = async () => {
   const latlong = await geoCodeCity(form.location)
   addApplication(
     {
+      user: user,
       input: {
         type: form.type,
         status: form.status,

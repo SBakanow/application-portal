@@ -8,6 +8,7 @@ import Filter from './Filter.vue'
 import { getApplicationsQuery } from '@/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import DownloadCsv from './DownloadCsv.vue'
+import { useAuthStore } from '@/store/authStore'
 
 defineProps({
   limit: Number,
@@ -21,7 +22,10 @@ defineProps({
   },
 })
 
-const { result, loading } = useQuery(getApplicationsQuery)
+const authStore = useAuthStore()
+const user = authStore.user.username
+
+const { result, loading } = useQuery(getApplicationsQuery, { user })
 
 const filters = ref({
   type: [],
@@ -126,7 +130,7 @@ onUnmounted(() => {
       <div v-else>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">
           <ApplicationListing
-            v-for="application in filteredApplications.slice(
+            v-for="application in filteredApplications?.slice(
               0,
               limit || filteredApplications.length,
             )"

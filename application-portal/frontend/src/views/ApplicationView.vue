@@ -14,6 +14,10 @@ import {
 } from '@/graphql/queries.js'
 import { deleteApplicationMutation, updateApplicationMutation } from '@/graphql/mutations.js'
 import { useMutation, useQuery } from '@vue/apollo-composable'
+import { useAuthStore } from '@/store/authStore'
+
+const authStore = useAuthStore()
+const user = authStore.user.username
 
 const route = useRoute()
 const router = useRouter()
@@ -138,7 +142,10 @@ const {
       },
     },
   },
-  refetchQueries: [{ query: getCountByTypeQuery }, { query: getCountByStatusQuery }],
+  refetchQueries: [
+    { query: getCountByTypeQuery, variables: user },
+    { query: getCountByStatusQuery, variables: user },
+  ],
 }))
 
 let updateType = ''

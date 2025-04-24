@@ -4,9 +4,13 @@ import Map from './Map.vue'
 import { computed } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { getCountByStatusQuery, getCountByTypeQuery } from '@/graphql/queries'
+import { useAuthStore } from '@/store/authStore'
+
+const authStore = useAuthStore()
+const user = authStore.user.username
 
 const fetchData = (query, key) => {
-  const { result, loading, error } = useQuery(query)
+  const { result, loading, error } = useQuery(query, { user })
 
   return {
     data: computed(() => {

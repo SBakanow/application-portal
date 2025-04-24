@@ -1,11 +1,16 @@
 <script setup>
 import apolloClient from '@/apolloClient'
 import { getApplicationsCSVQuery } from '@/graphql/queries'
+import { useAuthStore } from '@/store/authStore'
+
+const authStore = useAuthStore()
+const user = authStore.user.username
 
 const downloadCSV = async () => {
   try {
     const { data } = await apolloClient.query({
       query: getApplicationsCSVQuery,
+      variables: user,
     })
 
     if (!data || !data.applicationsCSV) {
