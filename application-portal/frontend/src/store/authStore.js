@@ -14,11 +14,20 @@ export const useAuthStore = defineStore('auth', {
         const response = await axios.post('/api/auth/validate', { withCredentials: true })
         const { username, expiresAt } = response.data
 
+        const timeUntilExpiry = new Date(expiresAt).getTime() - Date.now()
+        if (timeUntilExpiry <= 0) {
+          throw new Error('Session expired')
+        }
+
         this.isAuthenticated = true
         this.user = { username }
         this.setSessionExpiry(expiresAt)
       } catch (error) {
-        console.warn('Failed to authenticate')
+        if (error.response?.status === 401) {
+          console.warn('Failed to authenticate: Session invalid or expired.')
+        } else {
+          console.error('An unexpected error occurred:', error)
+        }
         this.clearAuthStatus()
       }
     },
